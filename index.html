@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>Smart Home Trier — Dokumentenpaket (Pro)</title>
+<style>
+:root{--bg:#000;--bg2:#0b0b0c;--fg:#f5f5f7;--muted:#9aa0a6;--gold:#ffd54d;--blue:#8fb7ff;--stroke:#1a1a1c;--r:14px;--safe:12mm;--a4w:210mm;--a4h:297mm}
+*{box-sizing:border-box}html,body{height:100%;background:var(--bg);color:var(--fg)}body{margin:0;letter-spacing:.2px;font-family:Inter,Segoe UI,Roboto,system-ui,Arial,sans-serif;display:grid;place-items:start;justify-content:center;gap:16mm;padding:16mm 0;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+.page{width:var(--a4w);height:var(--a4h);background:var(--bg);border:1px solid #222;border-radius:10px;overflow:hidden;position:relative}.safe{position:absolute;inset:var(--safe);display:grid;gap:10px}
+@page{size:A4;margin:0}@media print{body{display:block;padding:0;background:transparent}.toolbar,.sig-modal{display:none!important}.page{border:0;border-radius:0;page-break-after:always}.page:last-child{page-break-after:auto}input,textarea,select{border-color:#333!important}.muted{color:#7e838c!important}}
+header.doc-head{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;padding-bottom:10px;border-bottom:1px solid var(--stroke)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800}.logo svg{width:28px;height:28px;filter:drop-shadow(0 0 12px rgba(255,213,77,.25))}
+.subtitle{color:var(--muted);font-size:12px}.doc-title{font-size:22px;margin:0}.tag{display:inline-block;font-weight:700;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,213,77,.45);color:#ffe28b;background:rgba(255,213,77,.08);font-size:12px}
+.grid{display:grid;gap:10px}.cols-2{grid-template-columns:1fr 1fr}.card{background:var(--bg2);border:1px solid var(--stroke);border-radius:var(--r);padding:14px}
+h2{margin:0;font-size:16px}h3{margin:0;font-size:14px;color:#d9dbe0}p{margin:0;font-size:13px}.muted{color:var(--muted)}label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+input,select,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #232428;background:#0f0f12;color:var(--fg);font-size:13px}textarea{resize:vertical;min-height:70px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px;font-size:13px;border-bottom:1px solid #232428}tfoot td{border-top:1px solid #232428}td.action{width:34px;text-align:center}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{padding:10px 14px;border-radius:999px;border:1px solid var(--stroke);background:linear-gradient(180deg,#0f1114,#0c0d10);color:#e7e9ee;font-weight:700;cursor:pointer}.btn.primary{background:linear-gradient(180deg,#ffd54d,#f6c62a);color:#000;border:0}.btn.small{padding:6px 10px;font-size:12px}.btn:disabled{opacity:.6;cursor:not-allowed}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#0f1114;border:1px solid #232428}
+.sig-box{height:70px;border:1px dashed #3a3b40;border-radius:10px;background:#0f0f12;display:grid;place-items:center;color:#b8bbc3;font-size:12px;cursor:pointer;overflow:hidden}.sig-box img{max-height:100%;max-width:100%;object-fit:contain;display:block}
+.toolbar{position:sticky;top:0;z-index:5;background:linear-gradient(180deg,rgba(10,10,11,.85),rgba(10,10,11,.65));border-bottom:1px solid var(--stroke);padding:10px 14px;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}.note{font-size:12px;color:#b4b7bd}
+.sig-modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;z-index:9999}.sig-dialog{width:min(95vw,720px);background:#0e0f12;border:1px solid #26272c;border-radius:14px;padding:14px;display:grid;gap:10px}.sig-canvas-wrap{border:1px solid #232428;border-radius:10px;background:#090a0d;height:280px}#sigCanvas{width:100%;height:100%;display:block}.sig-actions{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <button class="btn primary" onclick="window.print()">Als PDF speichern (Drucken)</button>
+  <button class="btn" onclick="addLineItem()">Position hinzufügen (aktiv)</button>
+  <button class="btn" onclick="copyFromAngebot()">Angebot → Auftrag & Rechnung</button>
+  <span class="pill"><strong>Steuerland:</strong>
+    <select id="countrySel"><option value="DE">Deutschland</option><option value="LU">Luxemburg</option></select>
+    <strong>Satz:</strong><select id="vatSel"></select>
+    <label style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" id="grossMode"><span>Preise inkl. MwSt (Brutto)</span></label>
+  </span>
+  <span class="pill"><button class="btn small" onclick="openSig('kunde')">Unterschrift Kunde</button><button class="btn small" onclick="openSig('techniker')">Unterschrift Techniker</button></span>
+  <span class="pill"><button class="btn" onclick="saveAsHtml()">Speichern als HTML</button></span>
+  <span class="note">Eingeben → ggf. kopieren → Drucken/Speichern.</span>
+</div>
+
+<template id="logo"><div class="logo"><svg viewBox="0 0 48 48" fill="none"><path d="M6 22 L24 8 L42 22" stroke="#ffd54d" stroke-width="2.5" stroke-linecap="round"/><rect x="14" y="22" width="20" height="16" rx="4" stroke="#8fb7ff" stroke-width="2"/><circle cx="24" cy="30" r="2.4" fill="#ffd54d"/></svg></div></template>
+<template id="firmendaten"><div><strong>Smart Home Trier GmbH</strong><br>Luxemburg · Trier & Umgebung<br>📞 +49 ··· ··· ··· · ✉ info@smarthome-trier.de<br>USt-IdNr.: DE•••••••••</div></template>
+
+<section class="page" id="doc-agb"><div class="safe">
+  <header class="doc-head"><div class="brand"><span class="logo"></span><div><h1 class="doc-title">AGB</h1><div class="subtitle">Version <span data-fill="heute"></span></div></div></div><div class="right"><span class="tag">AGB</span></div></header>
+  <div class="grid cols-2"><div class="card"><h2>1. Geltung</h2><p>Gilt für Planung, Lieferung und Installation von Smart-Home-Komponenten.</p></div><div class="card"><h2>2. Preise</h2><p>Angebote 30 Tage gültig. Preise inkl./exkl. MwSt je Auswahl.</p></div><div class="card"><h2>3. Mitwirkung</h2><p>Zugang, Strom, Internet durch Kunde.</p></div><div class="card"><h2>4. Gewährleistung</h2><p>Gesetzliche Rechte; Herstellergarantien unberührt.</p></div><div class="card"><h2>5. Haftung</h2><p>Vorsatz/grobe Fahrlässigkeit; bei Kardinalpflichten begrenzt.</p></div><div class="card"><h2>6. Widerruf</h2><p>14 Tage für Verbraucher bei Fernabsatz.</p></div></div>
+  <div class="grid cols-2"><div class="card"><h3>Firma</h3><div data-slot="firmenblock"></div></div><div class="card"><label>Besondere Vereinbarungen</label><textarea data-model="vertrag.besonderes"></textarea></div></div>
+  <div class="grid cols-2"><div><label>Ort/Datum</label><input data-model="vertrag.ortdatum" placeholder="Trier, 16.08.2025"></div><div><label>Bestätigung (Kunde)</label><div class="sig-box" data-sig="kunde">Digitale Unterschrift (Kunde)</div></div></div>
+</div></section>
+
+<section class="page" id="doc-angebot" data-lineitems><div class="safe">
+  <header class="doc-head"><div class="brand"><span class="logo"></span><div><h1 class="doc-title">Angebot</h1><div class="subtitle">Angebots-Nr.: <input style="width:160px" data-model="angebot.nr" placeholder="ANG-2025-001"> · Datum: <input style="width:140px" data-bind="today" data-model="angebot.datum"></div></div></div><div class="right"><span class="tag">Angebot</span></div></header>
+  <div class="grid cols-2"><div class="card"><h3>Kunde</h3><label>Name/Firma</label><input data-model="kunde.name"><label>Adresse</label><input data-model="kunde.adresse"><label>Kontakt</label><input data-model="kunde.kontakt"></div><div class="card"><h3>Projekt</h3><label>Bezeichnung</label><input data-model="projekt.bezeichnung"><label>Ort</label><input data-model="projekt.ort"><label>Bemerkungen</label><textarea data-model="projekt.bemerkungen"></textarea></div></div>
+  <div class="card"><table id="table-angebot" data-table><thead><tr><th style="width:40%"><span class="col-pos">Position</span></th><th style="width:12%">Menge</th><th style="width:20%"><span class="col-price">Einzelpreis (Netto)</span></th><th style="width:22%" class="right"><span class="col-sum">Summe (Netto)</span></th><th class="action"></th></tr></thead><tbody>
+    <tr><td><input placeholder="Philips Hue – Starter Set"></td><td><input type="number" step="1" min="1" value="1"></td><td><input type="number" step="0.01" min="0" value="199"></td><td class="right sum">199,00</td><td class="action"><button class="btn small" onclick="removeRow(this)">🗑️</button></td></tr>
+  </tbody><tfoot><tr><td colspan="3" class="right">Zwischensumme (Netto)</td><td class="right" id="angebot-sub">0,00</td><td></td></tr><tr><td colspan="3" class="right">MwSt <span id="angebot-vatrate">19</span>%</td><td class="right" id="angebot-vat">0,00</td><td></td></tr><tr><td colspan="3" class="right"><strong>Gesamt (Brutto)</strong></td><td class="right" id="angebot-total"><strong>0,00</strong></td><td></td></tr></tfoot></table><div class="actions"><button class="btn" onclick="addLineItem()">Position hinzufügen</button></div></div>
+  <div class="grid cols-2"><div class="card"><h3>Gültigkeit</h3><p class="muted">30 Tage. Es gelten unsere AGB.</p></div><div class="card"><h3>Akzeptanz</h3><p>Mit Unterschrift bestätigt der Kunde.</p><div class="grid cols-2"><div><label>Ort/Datum</label><input data-model="angebot.ortdatum"></div><div><label>Unterschrift (Kunde)</label><div class="sig-box" data-sig="kunde">Digitale Unterschrift (Kunde)</div></div></div></div></div>
+</div></section>
+
+<section class="page" id="doc-auftragsbestaetigung" data-lineitems><div class="safe">
+  <header class="doc-head"><div class="brand"><span class="logo"></span><div><h1 class="doc-title">Auftragsbestätigung</h1><div class="subtitle">Auftrags-Nr.: <input style="width:160px" data-model="auftrag.nr" placeholder="AB-2025-001"> · Bezug: <input style="width:120px" data-model="auftrag.bezug" placeholder="ANG-2025-001"></div></div></div><div class="right"><span class="tag">Auftragsbestätigung</span></div></header>
+  <div class="grid cols-2"><div class="card"><h3>Kunde</h3><label>Name/Firma</label><input data-model="kunde.name"><label>Adresse</label><input data-model="kunde.adresse"><label>Kontakt</label><input data-model="kunde.kontakt"></div><div class="card"><h3>Leistung</h3><label>Geplanter Termin</label><input type="date" data-model="auftrag.termin"><label>Bemerkungen</label><textarea data-model="auftrag.bemerkungen"></textarea></div></div>
+  <div class="card"><table id="table-ab" data-table><thead><tr><th style="width:40%">Position</th><th style="width:12%">Menge</th><th style="width:20%"><span class="col-price">Einzelpreis (Netto)</span></th><th style="width:22%" class="right"><span class="col-sum">Summe (Netto)</span></th><th class="action"></th></tr></thead><tbody></tbody><tfoot><tr><td colspan="3" class="right">Zwischensumme (Netto)</td><td class="right" id="ab-sub">0,00</td><td></td></tr><tr><td colspan="3" class="right">MwSt <span id="ab-vatrate">19</span>%</td><td class="right" id="ab-vat">0,00</td><td></td></tr><tr><td colspan="3" class="right"><strong>Gesamt (Brutto)</strong></td><td class="right" id="ab-total"><strong>0,00</strong></td><td></td></tr></tfoot></table><div class="actions"><button class="btn" onclick="addLineItem()">Position hinzufügen</button></div></div>
+  <div class="grid cols-2"><div class="card"><h3>Zahlungsbedingungen</h3><p class="muted">50% bei Auftrag, Rest nach Abnahme; oder wie vereinbart.</p></div><div class="card"><h3>Bestätigung</h3><div class="grid cols-2"><div><label>Ort/Datum</label><input data-model="auftrag.ortdatum"></div><div><label>Unterschrift (Kunde)</label><div class="sig-box" data-sig="kunde">Digitale Unterschrift (Kunde)</div></div></div></div></div>
+</div></section>
+
+<section class="page" id="doc-rechnung" data-lineitems><div class="safe">
+  <header class="doc-head"><div class="brand"><span class="logo"></span><div><h1 class="doc-title">Rechnung</h1><div class="subtitle">Rechnungs-Nr.: <input style="width:160px" data-model="rechnung.nr" placeholder="RE-2025-001"> · Datum: <input style="width:140px" data-bind="today" data-model="rechnung.datum"></div></div></div><div class="right"><span class="tag">Rechnung</span></div></header>
+  <div class="grid cols-2"><div class="card"><h3>Rechnung an</h3><label>Name/Firma</label><input data-model="kunde.name"><label>Adresse</label><input data-model="kunde.adresse"><label>Kontakt</label><input data-model="kunde.kontakt"></div><div class="card"><h3>Zahlungsziel</h3><label>Fällig am</label><input type="date" data-model="rechnung.faellig"><label>Verwendungszweck</label><input data-model="rechnung.verwendungszweck" placeholder="Rechnungsnummer / Projekt"></div></div>
+  <div class="card"><table id="table-re" data-table><thead><tr><th style="width:40%">Position</th><th style="width:12%">Menge</th><th style="width:20%"><span class="col-price">Einzelpreis (Netto)</span></th><th style="width:22%" class="right"><span class="col-sum">Summe (Netto)</span></th><th class="action"></th></tr></thead><tbody></tbody>
+    <tfoot><tr><td colspan="3" class="right">Zwischensumme (Netto)</td><td class="right" id="re-sub">0,00</td><td></td></tr><tr><td colspan="3" class="right">MwSt <span id="re-vatrate">19</span>%</td><td class="right" id="re-vat">0,00</td><td></td></tr><tr><td colspan="3" class="right"><strong>Gesamt (Brutto)</strong></td><td class="right" id="re-total"><strong>0,00</strong></td><td></td></tr><tr><td colspan="3" class="right">Anzahlung</td><td class="right" id="re-anzahlung">0,00</td><td></td></tr><tr><td colspan="3" class="right"><strong>Restbetrag</strong></td><td class="right" id="re-rest"><strong>0,00</strong></td><td></td></tr></tfoot></table><div class="actions"><button class="btn" onclick="addLineItem()">Position hinzufügen</button></div></div>
+  <div class="grid cols-2"><div class="card"><h3>Bankverbindung</h3><p>Smart Home Trier GmbH<br>IBAN: DE•••• •••• •••• •••• •• · BIC: GENODEF1TRI</p></div><div class="card"><h3>Anzahlung / Rest</h3><div class="grid cols-2"><div><label>Anzahlung (%)</label><input type="number" min="0" max="100" step="0.01" id="anzPercent" value="0"></div><div><label>Anzahlung (€)</label><input type="number" min="0" step="0.01" id="anzAmount" value="0"></div></div><p class="muted">Restbetrag = Brutto − Anzahlung.</p></div></div>
+</div></section>
+
+<section class="page" id="doc-widerruf"><div class="safe">
+  <header class="doc-head"><div class="brand"><span class="logo"></span><div><h1 class="doc-title">Widerrufsbelehrung (B2C)</h1><div class="subtitle">Fernabsatz / Haustürgeschäft</div></div></div><div class="right"><span class="tag">Widerruf</span></div></header>
+  <div class="card"><p><strong>Widerrufsrecht:</strong> Sie haben das Recht, binnen 14 Tagen ohne Angabe von Gründen zu widerrufen. Die Frist beginnt ab Vertragsschluss, bei Waren ab Erhalt.</p><p class="muted">Folgen: Erstattung binnen 14 Tagen; bereits erbrachte Leistungen sind zu vergüten, wenn mit der Ausführung vor Ablauf der Frist begonnen wurde.</p></div>
+  <div class="card"><h3>Muster-Widerrufsformular</h3><div class="grid cols-2"><div><label>An (Unternehmen)</label><input value="Smart Home Trier GmbH"><label>Adresse</label><input data-model="firma.adresse" placeholder="Straße, PLZ, Ort"><label>E-Mail</label><input value="info@smarthome-trier.de"></div><div><label>Hiermit widerrufe ich…</label><textarea data-model="widerruf.text"></textarea></div></div><div class="grid cols-2"><div><label>Name</label><input data-model="kunde.name"></div><div><label>Anschrift</label><input data-model="kunde.adresse"></div></div><div class="grid cols-2"><div><label>Datum/Unterschrift</label><div class="sig-box" data-sig="kunde">Digitale Unterschrift (Kunde)</div></div></div></div>
+</div></section>
+
+<script>
+// Init visuals
+document.querySelectorAll('.doc-head .logo').forEach(el=>el.innerHTML=document.getElementById('logo').innerHTML);
+document.querySelectorAll('[data-slot="firmenblock"]').forEach(el=>el.innerHTML=document.getElementById('firmendaten').innerHTML);
+const todayStr=new Date().toLocaleDateString('de-DE');document.querySelectorAll('[data-bind="today"]').forEach(i=>i.value=todayStr);document.querySelectorAll('[data-fill="heute"]').forEach(e=>e.textContent=todayStr);
+
+// State (no localStorage)
+const STATE={steuer:{country:'DE',rate:19,grossInput:false},signatures:{kunde:'',techniker:''}};
+// Bind inputs (mirror)
+function setDeep(o,p,v){const ks=p.split('.');let n=o;while(ks.length>1){const k=ks.shift();n[k]=n[k]||{};n=n[k]}n[ks[0]]=v}
+document.querySelectorAll('input[data-model],textarea[data-model],select[data-model]').forEach(el=>{
+  el.addEventListener('input',()=>{const key=el.dataset.model;setDeep(STATE,key,(el.type==='checkbox')?el.checked:el.value);
+    document.querySelectorAll('[data-model="'+key+'"]').forEach(peer=>{if(peer===el)return; if(peer.type==='checkbox'){peer.checked=el.checked}else{peer.value=el.value}});
+  });
+});
+
+// VAT presets
+const countrySel=document.getElementById('countrySel'), vatSel=document.getElementById('vatSel'), grossMode=document.getElementById('grossMode');
+const RATES={DE:[19,7], LU:[17,14,8,3]};
+function refreshVatOptions(){
+  vatSel.innerHTML='';
+  RATES[STATE.steuer.country].forEach(r=>{const o=document.createElement('option');o.value=r;o.textContent=r+' %'; if(r===STATE.steuer.rate)o.selected=true; vatSel.appendChild(o)});
+  document.getElementById('angebot-vatrate').textContent=STATE.steuer.rate;
+  document.getElementById('ab-vatrate').textContent=STATE.steuer.rate;
+  document.getElementById('re-vatrate').textContent=STATE.steuer.rate;
+  const priceLabel=STATE.steuer.grossInput?'Einzelpreis (Brutto)':'Einzelpreis (Netto)';
+  const sumLabel=STATE.steuer.grossInput?'Summe (Brutto)':'Summe (Netto)';
+  document.querySelectorAll('.col-price').forEach(n=>n.textContent=priceLabel);
+  document.querySelectorAll('.col-sum').forEach(n=>n.textContent=sumLabel);
+}
+countrySel.addEventListener('change',()=>{STATE.steuer.country=countrySel.value;STATE.steuer.rate=RATES[STATE.steuer.country][0];refreshVatOptions();recalcAll()});
+vatSel.addEventListener('change',()=>{STATE.steuer.rate=parseFloat(vatSel.value);refreshVatOptions();recalcAll()});
+grossMode.addEventListener('change',()=>{STATE.steuer.grossInput=!!grossMode.checked;refreshVatOptions();recalcAll()});
+refreshVatOptions(); vatSel.value='19'; grossMode.checked=false;
+
+// Calc
+function euro(n){return n.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function recalcTable(table){
+  if(!table) return;
+  const rate=STATE.steuer.rate/100, grossIn=STATE.steuer.grossInput;
+  let subNet=0, totalGross=0;
+  table.querySelectorAll('tbody tr').forEach(tr=>{
+    const qty=parseFloat(tr.querySelector('td:nth-child(2) input')?.value||0);
+    const priceVal=parseFloat(tr.querySelector('td:nth-child(3) input')?.value||0);
+    let net=priceVal, gross=priceVal;
+    if(grossIn){ net=priceVal/(1+rate); gross=priceVal; } else { gross=priceVal*(1+rate); }
+    const lineNet=qty*net, lineGross=qty*gross;
+    subNet+=lineNet; totalGross+=lineGross;
+    const sum=tr.querySelector('.sum'); if(sum) sum.textContent = euro(grossIn?lineGross:lineNet);
+  });
+  const vat=totalGross - subNet;
+  const map={ 'table-angebot':['angebot-sub','angebot-vat','angebot-total'], 'table-ab':['ab-sub','ab-vat','ab-total'], 'table-re':['re-sub','re-vat','re-total'] };
+  const ids=map[table.id]; if(ids){ document.getElementById(ids[0]).textContent=euro(subNet); document.getElementById(ids[1]).textContent=euro(vat); document.getElementById(ids[2]).textContent=euro(totalGross); }
+  if(table.id==='table-re'){ recalcDeposit(totalGross); }
+}
+function recalcAll(){ document.querySelectorAll('table[data-table]').forEach(recalcTable); }
+
+// Add/remove rows
+window.addLineItem=function(){
+  const page=document.activeElement?.closest('[data-lineitems]')||document.querySelector('[data-lineitems]'); if(!page) return;
+  const tbody=page.querySelector('tbody'); const tr=document.createElement('tr');
+  tr.innerHTML='<td><input placeholder="Position"></td><td><input type="number" step="1" min="1" value="1"></td><td><input type="number" step="0.01" min="0" value="0"></td><td class="right sum">0,00</td><td class="action"><button class="btn small" onclick="removeRow(this)">🗑️</button></td>';
+  tbody.appendChild(tr); tr.querySelectorAll('input').forEach(i=>i.addEventListener('input',()=>recalcTable(page.querySelector('table')))); recalcTable(page.querySelector('table')); tr.querySelector('input')?.focus();
+};
+window.removeRow=function(btn){ const table=btn.closest('table'); btn.closest('tr').remove(); recalcTable(table); };
+
+// Copy Angebot -> Auftrag & Rechnung
+window.copyFromAngebot=function(){
+  const src=document.getElementById('table-angebot').querySelector('tbody');
+  const rows=Array.from(src.querySelectorAll('tr')).map(tr=>{const c=tr.querySelectorAll('td'); return {pos:c[0].querySelector('input')?.value||'', qty:c[1].querySelector('input')?.value||'1', price:c[2].querySelector('input')?.value||'0'};});
+  [document.getElementById('table-ab'), document.getElementById('table-re')].forEach(tbl=>{
+    const tb=tbl.querySelector('tbody'); tb.innerHTML='';
+    rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML='<td><input value="'+escapeHtml(r.pos)+'"></td><td><input type="number" step="1" min="1" value="'+r.qty+'"></td><td><input type="number" step="0.01" min="0" value="'+r.price+'"></td><td class="right sum">0,00</td><td class="action"><button class="btn small" onclick="removeRow(this)">🗑️</button></td>'; tb.appendChild(tr); tr.querySelectorAll('input').forEach(i=>i.addEventListener('input',()=>recalcTable(tbl))); });
+    recalcTable(tbl);
+  });
+};
+function escapeHtml(s){return (s+'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;')}
+
+// Deposit
+const anzPercent=document.getElementById('anzPercent'), anzAmount=document.getElementById('anzAmount');
+function recalcDeposit(totalGross){
+  const active= document.activeElement;
+  const p=parseFloat(anzPercent?.value||'0'); let a=parseFloat(anzAmount?.value||'0');
+  if(active===anzPercent){ a= totalGross*(p/100); if(anzAmount) anzAmount.value = a.toFixed(2); }
+  else if(active===anzAmount){ const np = totalGross>0 ? (a/totalGross)*100 : 0; if(anzPercent) anzPercent.value = np.toFixed(2); }
+  else { a = totalGross*(parseFloat(anzPercent?.value||'0')/100); if(anzAmount) anzAmount.value = a.toFixed(2); }
+  const rest = Math.max(0,totalGross - a);
+  document.getElementById('re-anzahlung').textContent = euro(a);
+  document.getElementById('re-rest').textContent = euro(rest);
+}
+anzPercent?.addEventListener('input',()=>recalcTable(document.getElementById('table-re')));
+anzAmount?.addEventListener('input',()=>recalcTable(document.getElementById('table-re')));
+
+// Wire inputs and initial calc
+document.querySelectorAll('table[data-table] tbody input').forEach(i=>i.addEventListener('input',()=>recalcAll()));
+recalcAll();
+
+// Signatures
+const modal=document.createElement('div'); modal.className='sig-modal';
+modal.innerHTML='<div class="sig-dialog"><h3>Digitale Unterschrift</h3><div class="sig-canvas-wrap"><canvas id="sigCanvas"></canvas></div><div class="sig-actions"><div class="actions"><button class="btn" id="clearSig">Löschen</button></div><div class="actions"><button class="btn" id="cancelSig">Abbrechen</button><button class="btn primary" id="saveSig">Speichern</button></div></div><div class="note">Mit Maus, Touch oder Stift unterschreiben.</div></div>';
+document.body.appendChild(modal);
+let sigRole='kunde', ctx, drawing=false, last=null;
+function resizeCanvas(){ const c=document.getElementById('sigCanvas'); const r=c.parentElement.getBoundingClientRect(); const d=Math.max(window.devicePixelRatio||1,1); c.width=Math.floor(r.width*d); c.height=Math.floor(r.height*d); c.style.width=r.width+'px'; c.style.height=r.height+'px'; ctx=c.getContext('2d'); ctx.scale(d,d); ctx.lineWidth=2; ctx.lineCap='round'; ctx.strokeStyle='#fff'; const data=STATE.signatures[sigRole]; if(data){ const img=new Image(); img.onload=()=>ctx.drawImage(img,0,0,r.width,r.height); img.src=data; } else { ctx.clearRect(0,0,r.width,r.height); } }
+function p(e){ const c=document.getElementById('sigCanvas'); const r=c.getBoundingClientRect(); const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left; const y=(e.touches?e.touches[0].clientY:e.clientY)-r.top; return {x,y}; }
+function start(e){ drawing=true; last=p(e); e.preventDefault(); }
+function move(e){ if(!drawing) return; const q=p(e); ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(q.x,q.y); ctx.stroke(); last=q; e.preventDefault(); }
+function end(e){ drawing=false; e && e.preventDefault(); }
+function attach(){ const c=document.getElementById('sigCanvas'); c.addEventListener('mousedown',start); c.addEventListener('mousemove',move); window.addEventListener('mouseup',end); c.addEventListener('touchstart',start,{passive:false}); c.addEventListener('touchmove',move,{passive:false}); c.addEventListener('touchend',end,{passive:false}); }
+function renderSig(){ document.querySelectorAll('.sig-box').forEach(b=>{ const r=b.dataset.sig||'kunde'; const d=STATE.signatures[r]; b.innerHTML = d ? '<img alt="Unterschrift" src="'+d+'">' : (r==='techniker'?'Digitale Unterschrift (Techniker)':'Digitale Unterschrift (Kunde)'); }); }
+window.openSig=function(role){ sigRole=role||'kunde'; modal.style.display='flex'; setTimeout(resizeCanvas,30); };
+function closeSig(){ modal.style.display='none'; }
+modal.querySelector('#clearSig').addEventListener('click',()=>{ const c=document.getElementById('sigCanvas'); ctx.clearRect(0,0,c.width,c.height); });
+modal.querySelector('#cancelSig').addEventListener('click',closeSig);
+modal.querySelector('#saveSig').addEventListener('click',()=>{ const c=document.getElementById('sigCanvas'); STATE.signatures[sigRole] = c.toDataURL('image/png'); renderSig(); closeSig(); });
+window.addEventListener('resize',()=>{ if(modal.style.display==='flex') resizeCanvas(); });
+attach(); renderSig();
+document.querySelectorAll('.sig-box').forEach(b=>b.addEventListener('click',()=>openSig(b.dataset.sig||'kunde')));
+
+// Save as HTML (filename by Angebots-Nr.)
+window.saveAsHtml=function(){
+  const clone=document.documentElement.cloneNode(true);
+  clone.querySelectorAll('input,textarea,select').forEach(el=>{
+    if(el.type==='checkbox'){ if(el.checked) el.setAttribute('checked','checked'); else el.removeAttribute('checked'); }
+    else if(el.tagName.toLowerCase()==='textarea'){ el.textContent = el.value; }
+    else { el.setAttribute('value', el.value); }
+  });
+  const html='<!DOCTYPE html>\n'+clone.outerHTML;
+  const blob=new Blob([html],{type:'text/html'});
+  const ang=(document.querySelector('[data-model="angebot.nr"]')?.value || ('ANG-'+new Date().toISOString().slice(0,10))).replace(/[^A-Za-z0-9_-]+/g,'-');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='Dokumente-'+ang+'.html'; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},100);
+};
+</script>
+</body>
+</html>
