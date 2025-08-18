@@ -1,215 +1,1231 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="color-scheme" content="dark light">
-<title>Smart Home Trier — Dokumentenpaket (Pro)</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="dark light" />
+<title>Smart Home Trier — Dokumentenpaket v6 (HTML → PDF) • JSON-only, Anzahlung, Auto-Paging</title>
 <style>
-:root{--bg:#000;--bg2:#0b0b0c;--fg:#f5f5f7;--muted:#9aa0a6;--gold:#ffd54d;--blue:#8fb7ff;--stroke:#1a1a1c;--r:14px;--safe:12mm;--a4w:210mm;--a4h:297mm}
-*{box-sizing:border-box}html,body{height:100%;background:var(--bg);color:var(--fg)}body{margin:0;letter-spacing:.2px;font-family:Inter,Segoe UI,Roboto,system-ui,Arial,sans-serif;display:grid;place-items:start;justify-content:center;gap:16mm;padding:16mm 0;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-.page{width:var(--a4w);height:var(--a4h);background:var(--bg);border:1px solid #222;border-radius:10px;overflow:hidden;position:relative}.safe{position:absolute;inset:var(--safe);display:grid;gap:10px}
-@page{size:A4;margin:0}@media print{body{display:block;padding:0;background:transparent}.toolbar,.sig-modal{display:none!important}.page{border:0;border-radius:0;page-break-after:always}.page:last-child{page-break-after:auto}input,textarea,select{border-color:#333!important}.muted{color:#7e838c!important}}
-header.doc-head{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;padding-bottom:10px;border-bottom:1px solid var(--stroke)}
-.brand{display:flex;align-items:center;gap:10px;font-weight:800}.logo svg{width:28px;height:28px;filter:drop-shadow(0 0 12px rgba(255,213,77,.25))}
-.subtitle{color:var(--muted);font-size:12px}.doc-title{font-size:22px;margin:0}.tag{display:inline-block;font-weight:700;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,213,77,.45);color:#ffe28b;background:rgba(255,213,77,.08);font-size:12px}
-.grid{display:grid;gap:10px}.cols-2{grid-template-columns:1fr 1fr}.card{background:var(--bg2);border:1px solid var(--stroke);border-radius:var(--r);padding:14px}
-h2{margin:0;font-size:16px}h3{margin:0;font-size:14px;color:#d9dbe0}p{margin:0;font-size:13px}.muted{color:var(--muted)}label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-input,select,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #232428;background:#0f0f12;color:var(--fg);font-size:13px}textarea{resize:vertical;min-height:70px}
-table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px;font-size:13px;border-bottom:1px solid #232428}tfoot td{border-top:1px solid #232428}td.action{width:34px;text-align:center}
-.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{padding:10px 14px;border-radius:999px;border:1px solid var(--stroke);background:linear-gradient(180deg,#0f1114,#0c0d10);color:#e7e9ee;font-weight:700;cursor:pointer}.btn.primary{background:linear-gradient(180deg,#ffd54d,#f6c62a);color:#000;border:0}.btn.small{padding:6px 10px;font-size:12px}.btn:disabled{opacity:.6;cursor:not-allowed}
-.pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#0f1114;border:1px solid #232428}
-.sig-box{height:70px;border:1px dashed #3a3b40;border-radius:10px;background:#0f0f12;display:grid;place-items:center;color:#b8bbc3;font-size:12px;cursor:pointer;overflow:hidden}.sig-box img{max-height:100%;max-width:100%;object-fit:contain;display:block}
-.toolbar{position:sticky;top:0;z-index:5;background:linear-gradient(180deg,rgba(10,10,11,.85),rgba(10,10,11,.65));border-bottom:1px solid var(--stroke);padding:10px 14px;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}.note{font-size:12px;color:#b4b7bd}
-.sig-modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;z-index:9999}.sig-dialog{width:min(95vw,720px);background:#0e0f12;border:1px solid #26272c;border-radius:14px;padding:14px;display:grid;gap:10px}.sig-canvas-wrap{border:1px solid #232428;border-radius:10px;background:#090a0d;height:280px}#sigCanvas{width:100%;height:100%;display:block}.sig-actions{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap}
+  /* =============================
+     Design Tokens
+     ============================= */
+  :root{
+    --bg:#000;
+    --bg-elev:#0b0b0c;
+    --fg:#f5f5f7;
+    --muted:#9aa0a6;
+    --gold:#ffd54d;
+    --blue:#8fb7ff;
+    --stroke:#1a1a1c;
+    --accent:#60a5fa;
+    --radius:14px;
+    --safe:12mm;
+    --a4w:210mm;
+    --a4h:297mm;
+    --sig-ratio: 3; /* width:height */
+  }
+
+  *{ box-sizing:border-box; }
+  html, body{ height:100%; background: var(--bg); color: var(--fg); }
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,Segoe UI,Roboto,"Helvetica Neue",Arial,system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    letter-spacing:.2px;
+    display:grid; place-items:start; justify-content:center; gap:16mm;
+    padding:16mm 0;
+  }
+  a{ color:inherit; text-decoration:none; }
+
+  .page{
+    width:var(--a4w); min-height:var(--a4h);
+    background: var(--bg);
+    border:1px solid #222; border-radius: 10px; overflow:hidden;
+    position:relative;
+  }
+  .safe{ position:absolute; inset:var(--safe); display:grid; gap:10px; }
+
+  @page{ size: A4; margin: 0; }
+  @media print{
+    body{ display:block; padding:0; background: transparent; }
+    .toolbar, .sig-modal, .actions .btn, .action-col, .copy-row, .settings-card{ display:none !important; }
+    .page{ border:0; border-radius:0; page-break-after: always; min-height:auto; }
+    /* Allow pages with long tables to expand naturally */
+    .page .safe{ position: static; padding: var(--safe); }
+    /* Repeat table headers/footers across page breaks */
+    thead{ display: table-header-group; }
+    tfoot{ display: table-footer-group; }
+    table, tr, td, th { page-break-inside: avoid; }
+    input, textarea, select{ border-color:#333 !important; }
+    .muted{ color:#7e838c !important; }
+  }
+
+  header.doc-head{
+    display:grid; grid-template-columns: 1fr auto; align-items:center; gap:14px;
+    padding-bottom: 10px; border-bottom:1px solid var(--stroke);
+  }
+  .brand{ display:flex; align-items:center; gap:10px; font-weight:800; }
+  .logo svg{ width:28px; height:28px; filter: drop-shadow(0 0 12px rgba(255,213,77,.25)); }
+  .subtitle{ color:var(--muted); font-size: 12px; }
+  .doc-title{ font-size: 22px; margin: 0; }
+  .tag{ display:inline-block; font-weight:700; padding:6px 10px; border-radius:999px;
+        border:1px solid rgba(255,213,77,.45); color:#ffe28b; background:rgba(255,213,77,.08); font-size:12px; }
+
+  .grid{ display:grid; gap:10px; }
+  .cols-2{ grid-template-columns: 1fr 1fr; }
+  .cols-3{ grid-template-columns: 1fr 1fr 1fr; }
+  .card{
+    background: var(--bg-elev); border:1px solid var(--stroke); border-radius: var(--radius); padding:14px;
+  }
+
+  h2{ margin:0; font-size: 16px; }
+  h3{ margin:0; font-size: 14px; color:#d9dbe0; }
+  p{ margin:0; font-size: 13px; }
+  .muted{ color:var(--muted); }
+  label{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
+  input, select, textarea{
+    width:100%; padding:10px 12px; border-radius:10px; border:1px solid #232428; background:#0f0f12; color:var(--fg);
+    font-size:13px;
+  }
+  textarea{ resize:vertical; min-height:70px; }
+
+  table{ width:100%; border-collapse: collapse; }
+  th, td{ text-align:left; padding:10px; font-size:13px; border-bottom:1px solid #232428; }
+  tfoot td{ border-top:1px solid #232428; }
+  th.right, td.right{ text-align:right; }
+
+  .actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .btn{
+    padding:10px 14px; border-radius:999px; border:1px solid var(--stroke);
+    background: linear-gradient(180deg, #0f1114, #0c0d10); color:#e7e9ee; font-weight:700; cursor:pointer;
+  }
+  .btn.primary{ background: linear-gradient(180deg,#ffd54d,#f6c62a); color:#000; border:0; }
+  .btn:disabled{ opacity:.6; cursor:not-allowed; }
+
+  .sig-box{
+    width:100%;
+    aspect-ratio: calc(var(--sig-ratio) / 1);
+    border:1px dashed #3a3b40; border-radius:10px; background:#0f0f12;
+    display:grid; place-items:center; color:#b8bbc3; font-size:12px; cursor:pointer;
+    position:relative; overflow:hidden;
+  }
+  .sig-box img{ width:100%; height:100%; object-fit:contain; display:block; }
+
+  .row{ display:flex; gap:8px; align-items:center; }
+  .right{ text-align:right; }
+  .center{ text-align:center; }
+  .mt-8{ margin-top:8px; }
+  .mt-12{ margin-top:12px; }
+  .mt-16{ margin-top:16px; }
+  .mt-24{ margin-top:24px; }
+
+  .toolbar{
+    position: sticky; top:0; z-index:5; inset-inline:0;
+    background: linear-gradient(180deg, rgba(10,10,11,.85), rgba(10,10,11,.65));
+    border-bottom:1px solid var(--stroke);
+    padding:10px 14px; display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap;
+  }
+  .note{ font-size:12px; color:#b4b7bd; }
+
+  /* Modal for signature */
+  .sig-modal{
+    position: fixed; inset:0; background: rgba(0,0,0,.65);
+    display:none; align-items:center; justify-content:center; z-index:9999;
+  }
+  .sig-dialog{
+    width:min(95vw, 760px); background:#0e0f12; border:1px solid #26272c; border-radius:14px; padding:14px; display:grid; gap:10px;
+  }
+  .sig-dialog h3{ margin:0; }
+  .sig-canvas-wrap{ border:1px solid #232428; border-radius:10px; background:#090a0d; aspect-ratio: calc(var(--sig-ratio) / 1); position:relative; }
+  canvas#sigCanvas{ width:100%; height:100%; display:block; }
+  .sig-actions{ display:flex; gap:8px; justify-content:space-between; flex-wrap:wrap; }
+
+  .settings-card .row{ gap:12px; }
+  .settings-card select{ min-width: 160px; }
+  .settings-inline{ display:flex; gap:10px; flex-wrap:wrap; }
+
+  .action-col{ width: 42px; text-align: center; }
+  .del-btn{ background:#2b2c31; border:1px solid #3a3b40; border-radius:8px; padding:6px 8px; cursor:pointer; }
 </style>
 </head>
 <body>
-<div class="toolbar">
-  <button class="btn primary" onclick="window.print()">Als PDF speichern (Drucken)</button>
-  <button class="btn" onclick="addLineItem()">Position hinzufügen (aktiv)</button>
-  <button class="btn" onclick="copyFromAngebot()">Angebot → Auftrag & Rechnung</button>
-  <span class="pill"><strong>Steuerland:</strong>
-    <select id="countrySel"><option value="DE">Deutschland</option><option value="LU">Luxemburg</option></select>
-    <strong>Satz:</strong><select id="vatSel"></select>
-    <label style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" id="grossMode"><span>Preise inkl. MwSt (Brutto)</span></label>
-  </span>
-  <span class="pill"><button class="btn small" onclick="openSig('kunde')">Unterschrift Kunde</button><button class="btn small" onclick="openSig('techniker')">Unterschrift Techniker</button></span>
-  <span class="pill"><button class="btn" onclick="saveAsHtml()">Speichern als HTML</button></span>
-  <span class="note">Eingeben → ggf. kopieren → Drucken/Speichern.</span>
-</div>
+  <div class="toolbar">
+    <div class="settings-inline settings-card">
+      <strong>Mehrwertsteuer & Preise:</strong>
+      <label>Land
+        <select id="country">
+          <option value="DE">Deutschland</option>
+          <option value="LU">Luxemburg</option>
+        </select>
+      </label>
+      <label>Steuersatz
+        <select id="vatRate">
+          <option value="19">19%</option>
+          <option value="7">7% (ermäßigt)</option>
+          <option value="17" data-country="LU">17% (Luxemburg)</option>
+        </select>
+      </label>
+      <label>Preis-Eingabe
+        <select id="priceMode">
+          <option value="net">Netto</option>
+          <option value="gross">Brutto</option>
+        </select>
+      </label>
+    </div>
+    <button class="btn" id="exportBtn">Export JSON</button>
+    <label class="btn" for="importFile">Import JSON</label>
+    <input id="importFile" type="file" accept="application/json" style="display:none"/>
+    <button class="btn primary" onclick="window.print()">Als PDF speichern (Drucken)</button>
+  </div>
 
-<template id="logo"><div class="logo"><svg viewBox="0 0 48 48" fill="none"><path d="M6 22 L24 8 L42 22" stroke="#ffd54d" stroke-width="2.5" stroke-linecap="round"/><rect x="14" y="22" width="20" height="16" rx="4" stroke="#8fb7ff" stroke-width="2"/><circle cx="24" cy="30" r="2.4" fill="#ffd54d"/></svg></div></template>
-<template id="firmendaten"><div><strong>Smart Home Trier GmbH</strong><br>Luxemburg · Trier & Umgebung<br>📞 +49 ··· ··· ··· · ✉ info@smarthome-trier.de<br>USt-IdNr.: DE•••••••••</div></template>
+  <template id="logo">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <path d="M6 22 L24 8 L42 22" stroke="#ffd54d" stroke-width="2.5" stroke-linecap="round"/>
+        <rect x="14" y="22" width="20" height="16" rx="4" stroke="#8fb7ff" stroke-width="2"/>
+        <circle cx="24" cy="30" r="2.4" fill="#ffd54d" />
+      </svg>
+    </div>
+  </template>
 
-<section class="page" id="doc-agb"><div class="safe">
-  <header class="doc-head"><div class="brand"><span class="logo"></span><div><h1 class="doc-title">AGB</h1><div class="subtitle">Version <span data-fill="heute"></span></div></div></div><div class="right"><span class="tag">AGB</span></div></header>
-  <div class="grid cols-2"><div class="card"><h2>1. Geltung</h2><p>Gilt für Planung, Lieferung und Installation von Smart-Home-Komponenten.</p></div><div class="card"><h2>2. Preise</h2><p>Angebote 30 Tage gültig. Preise inkl./exkl. MwSt je Auswahl.</p></div><div class="card"><h2>3. Mitwirkung</h2><p>Zugang, Strom, Internet durch Kunde.</p></div><div class="card"><h2>4. Gewährleistung</h2><p>Gesetzliche Rechte; Herstellergarantien unberührt.</p></div><div class="card"><h2>5. Haftung</h2><p>Vorsatz/grobe Fahrlässigkeit; bei Kardinalpflichten begrenzt.</p></div><div class="card"><h2>6. Widerruf</h2><p>14 Tage für Verbraucher bei Fernabsatz.</p></div></div>
-  <div class="grid cols-2"><div class="card"><h3>Firma</h3><div data-slot="firmenblock"></div></div><div class="card"><label>Besondere Vereinbarungen</label><textarea data-model="vertrag.besonderes"></textarea></div></div>
-  <div class="grid cols-2"><div><label>Ort/Datum</label><input data-model="vertrag.ortdatum" placeholder="Trier, 16.08.2025"></div><div><label>Bestätigung (Kunde)</label><div class="sig-box" data-sig="kunde">Digitale Unterschrift (Kunde)</div></div></div>
-</div></section>
+  <template id="firmendaten">
+    <div>
+      <strong>Smart Home Trier GmbH</strong><br/>
+      Luxemburg · Trier & Umgebung<br/>
+      📞 +49 ··· ··· ··· · ✉ info@smarthome-trier.de<br/>
+      USt-IdNr.: DE•••••••••
+    </div>
+  </template>
 
-<section class="page" id="doc-angebot" data-lineitems><div class="safe">
-  <header class="doc-head"><div class="brand"><span class="logo"></span><div><h1 class="doc-title">Angebot</h1><div class="subtitle">Angebots-Nr.: <input style="width:160px" data-model="angebot.nr" placeholder="ANG-2025-001"> · Datum: <input style="width:140px" data-bind="today" data-model="angebot.datum"></div></div></div><div class="right"><span class="tag">Angebot</span></div></header>
-  <div class="grid cols-2"><div class="card"><h3>Kunde</h3><label>Name/Firma</label><input data-model="kunde.name"><label>Adresse</label><input data-model="kunde.adresse"><label>Kontakt</label><input data-model="kunde.kontakt"></div><div class="card"><h3>Projekt</h3><label>Bezeichnung</label><input data-model="projekt.bezeichnung"><label>Ort</label><input data-model="projekt.ort"><label>Bemerkungen</label><textarea data-model="projekt.bemerkungen"></textarea></div></div>
-  <div class="card"><table id="table-angebot" data-table><thead><tr><th style="width:40%"><span class="col-pos">Position</span></th><th style="width:12%">Menge</th><th style="width:20%"><span class="col-price">Einzelpreis (Netto)</span></th><th style="width:22%" class="right"><span class="col-sum">Summe (Netto)</span></th><th class="action"></th></tr></thead><tbody>
-    <tr><td><input placeholder="Philips Hue – Starter Set"></td><td><input type="number" step="1" min="1" value="1"></td><td><input type="number" step="0.01" min="0" value="199"></td><td class="right sum">199,00</td><td class="action"><button class="btn small" onclick="removeRow(this)">🗑️</button></td></tr>
-  </tbody><tfoot><tr><td colspan="3" class="right">Zwischensumme (Netto)</td><td class="right" id="angebot-sub">0,00</td><td></td></tr><tr><td colspan="3" class="right">MwSt <span id="angebot-vatrate">19</span>%</td><td class="right" id="angebot-vat">0,00</td><td></td></tr><tr><td colspan="3" class="right"><strong>Gesamt (Brutto)</strong></td><td class="right" id="angebot-total"><strong>0,00</strong></td><td></td></tr></tfoot></table><div class="actions"><button class="btn" onclick="addLineItem()">Position hinzufügen</button></div></div>
-  <div class="grid cols-2"><div class="card"><h3>Gültigkeit</h3><p class="muted">30 Tage. Es gelten unsere AGB.</p></div><div class="card"><h3>Akzeptanz</h3><p>Mit Unterschrift bestätigt der Kunde.</p><div class="grid cols-2"><div><label>Ort/Datum</label><input data-model="angebot.ortdatum"></div><div><label>Unterschrift (Kunde)</label><div class="sig-box" data-sig="kunde">Digitale Unterschrift (Kunde)</div></div></div></div></div>
-</div></section>
+  <!-- ===================== 0) Deckblatt / Einstellungen ===================== -->
+  <section class="page" id="doc-deckblatt">
+    <div class="safe">
+      <header class="doc-head">
+        <div class="brand">
+          <span class="logo"></span>
+          <div>
+            <h1 class="doc-title">Dokumentenpaket</h1>
+            <div class="subtitle">Version <span data-fill="heute"></span> · JSON-only (kein LocalStorage)</div>
+          </div>
+        </div>
+        <div class="right"><span class="tag">Übersicht</span></div>
+      </header>
 
-<section class="page" id="doc-auftragsbestaetigung" data-lineitems><div class="safe">
-  <header class="doc-head"><div class="brand"><span class="logo"></span><div><h1 class="doc-title">Auftragsbestätigung</h1><div class="subtitle">Auftrags-Nr.: <input style="width:160px" data-model="auftrag.nr" placeholder="AB-2025-001"> · Bezug: <input style="width:120px" data-model="auftrag.bezug" placeholder="ANG-2025-001"></div></div></div><div class="right"><span class="tag">Auftragsbestätigung</span></div></header>
-  <div class="grid cols-2"><div class="card"><h3>Kunde</h3><label>Name/Firma</label><input data-model="kunde.name"><label>Adresse</label><input data-model="kunde.adresse"><label>Kontakt</label><input data-model="kunde.kontakt"></div><div class="card"><h3>Leistung</h3><label>Geplanter Termin</label><input type="date" data-model="auftrag.termin"><label>Bemerkungen</label><textarea data-model="auftrag.bemerkungen"></textarea></div></div>
-  <div class="card"><table id="table-ab" data-table><thead><tr><th style="width:40%">Position</th><th style="width:12%">Menge</th><th style="width:20%"><span class="col-price">Einzelpreis (Netto)</span></th><th style="width:22%" class="right"><span class="col-sum">Summe (Netto)</span></th><th class="action"></th></tr></thead><tbody></tbody><tfoot><tr><td colspan="3" class="right">Zwischensumme (Netto)</td><td class="right" id="ab-sub">0,00</td><td></td></tr><tr><td colspan="3" class="right">MwSt <span id="ab-vatrate">19</span>%</td><td class="right" id="ab-vat">0,00</td><td></td></tr><tr><td colspan="3" class="right"><strong>Gesamt (Brutto)</strong></td><td class="right" id="ab-total"><strong>0,00</strong></td><td></td></tr></tfoot></table><div class="actions"><button class="btn" onclick="addLineItem()">Position hinzufügen</button></div></div>
-  <div class="grid cols-2"><div class="card"><h3>Zahlungsbedingungen</h3><p class="muted">50% bei Auftrag, Rest nach Abnahme; oder wie vereinbart.</p></div><div class="card"><h3>Bestätigung</h3><div class="grid cols-2"><div><label>Ort/Datum</label><input data-model="auftrag.ortdatum"></div><div><label>Unterschrift (Kunde)</label><div class="sig-box" data-sig="kunde">Digitale Unterschrift (Kunde)</div></div></div></div></div>
-</div></section>
+      <div class="grid cols-3 mt-12">
+        <div class="card">
+          <h3>Kunde</h3>
+          <label>Name/Firma</label><input data-model="kunde.name" placeholder="Max Mustermann" />
+          <label>Adresse</label><input data-model="kunde.adresse" placeholder="Straße, Nr., PLZ Ort" />
+          <label>Kontakt</label><input data-model="kunde.kontakt" placeholder="+49 … / name@mail.de" />
+        </div>
+        <div class="card">
+          <h3>Projekt</h3>
+          <label>Bezeichnung</label><input data-model="projekt.bezeichnung" placeholder="Smartes Licht & Thermostate" />
+          <label>Ort</label><input data-model="projekt.ort" placeholder="Trier" />
+          <label>Nr.</label><input data-model="projekt.nr" placeholder="PRJ-2025-001" />
+        </div>
+        <div class="card">
+          <h3>Unternehmen</h3>
+          <div class="mt-8" data-slot="firmenblock"></div>
+        </div>
+      </div>
 
-<section class="page" id="doc-rechnung" data-lineitems><div class="safe">
-  <header class="doc-head"><div class="brand"><span class="logo"></span><div><h1 class="doc-title">Rechnung</h1><div class="subtitle">Rechnungs-Nr.: <input style="width:160px" data-model="rechnung.nr" placeholder="RE-2025-001"> · Datum: <input style="width:140px" data-bind="today" data-model="rechnung.datum"></div></div></div><div class="right"><span class="tag">Rechnung</span></div></header>
-  <div class="grid cols-2"><div class="card"><h3>Rechnung an</h3><label>Name/Firma</label><input data-model="kunde.name"><label>Adresse</label><input data-model="kunde.adresse"><label>Kontakt</label><input data-model="kunde.kontakt"></div><div class="card"><h3>Zahlungsziel</h3><label>Fällig am</label><input type="date" data-model="rechnung.faellig"><label>Verwendungszweck</label><input data-model="rechnung.verwendungszweck" placeholder="Rechnungsnummer / Projekt"></div></div>
-  <div class="card"><table id="table-re" data-table><thead><tr><th style="width:40%">Position</th><th style="width:12%">Menge</th><th style="width:20%"><span class="col-price">Einzelpreis (Netto)</span></th><th style="width:22%" class="right"><span class="col-sum">Summe (Netto)</span></th><th class="action"></th></tr></thead><tbody></tbody>
-    <tfoot><tr><td colspan="3" class="right">Zwischensumme (Netto)</td><td class="right" id="re-sub">0,00</td><td></td></tr><tr><td colspan="3" class="right">MwSt <span id="re-vatrate">19</span>%</td><td class="right" id="re-vat">0,00</td><td></td></tr><tr><td colspan="3" class="right"><strong>Gesamt (Brutto)</strong></td><td class="right" id="re-total"><strong>0,00</strong></td><td></td></tr><tr><td colspan="3" class="right">Anzahlung</td><td class="right" id="re-anzahlung">0,00</td><td></td></tr><tr><td colspan="3" class="right"><strong>Restbetrag</strong></td><td class="right" id="re-rest"><strong>0,00</strong></td><td></td></tr></tfoot></table><div class="actions"><button class="btn" onclick="addLineItem()">Position hinzufügen</button></div></div>
-  <div class="grid cols-2"><div class="card"><h3>Bankverbindung</h3><p>Smart Home Trier GmbH<br>IBAN: DE•••• •••• •••• •••• •• · BIC: GENODEF1TRI</p></div><div class="card"><h3>Anzahlung / Rest</h3><div class="grid cols-2"><div><label>Anzahlung (%)</label><input type="number" min="0" max="100" step="0.01" id="anzPercent" value="0"></div><div><label>Anzahlung (€)</label><input type="number" min="0" step="0.01" id="anzAmount" value="0"></div></div><p class="muted">Restbetrag = Brutto − Anzahlung.</p></div></div>
-</div></section>
+      <div class="card settings-card">
+        <h3>Einstellungen (für Angebote/AB/Rechnungen)</h3>
+        <div class="row">
+          <div>
+            <label>Land</label>
+            <select data-model="settings.land" id="s_land">
+              <option value="DE">Deutschland</option>
+              <option value="LU">Luxemburg</option>
+            </select>
+          </div>
+          <div>
+            <label>Steuersatz</label>
+            <select data-model="settings.vat" id="s_vat">
+              <option value="19">19%</option>
+              <option value="7">7%</option>
+              <option value="17">17% (LU)</option>
+            </select>
+          </div>
+          <div>
+            <label>Preis-Eingabe</label>
+            <select data-model="settings.mode" id="s_mode">
+              <option value="net">Netto</option>
+              <option value="gross">Brutto</option>
+            </select>
+          </div>
+        </div>
+        <p class="muted mt-8">Hinweis: Kopf-Einstellungen и Toolbar синхронизированы. In den Summen: Zwischensumme (Netto) / MwSt / Gesamt (Brutto).</p>
+      </div>
+    </div>
+  </section>
 
-<section class="page" id="doc-widerruf"><div class="safe">
-  <header class="doc-head"><div class="brand"><span class="logo"></span><div><h1 class="doc-title">Widerrufsbelehrung (B2C)</h1><div class="subtitle">Fernabsatz / Haustürgeschäft</div></div></div><div class="right"><span class="tag">Widerruf</span></div></header>
-  <div class="card"><p><strong>Widerrufsrecht:</strong> Sie haben das Recht, binnen 14 Tagen ohne Angabe von Gründen zu widerrufen. Die Frist beginnt ab Vertragsschluss, bei Waren ab Erhalt.</p><p class="muted">Folgen: Erstattung binnen 14 Tagen; bereits erbrachte Leistungen sind zu vergüten, wenn mit der Ausführung vor Ablauf der Frist begonnen wurde.</p></div>
-  <div class="card"><h3>Muster-Widerrufsformular</h3><div class="grid cols-2"><div><label>An (Unternehmen)</label><input value="Smart Home Trier GmbH"><label>Adresse</label><input data-model="firma.adresse" placeholder="Straße, PLZ, Ort"><label>E-Mail</label><input value="info@smarthome-trier.de"></div><div><label>Hiermit widerrufe ich…</label><textarea data-model="widerruf.text"></textarea></div></div><div class="grid cols-2"><div><label>Name</label><input data-model="kunde.name"></div><div><label>Anschrift</label><input data-model="kunde.adresse"></div></div><div class="grid cols-2"><div><label>Datum/Unterschrift</label><div class="sig-box" data-sig="kunde">Digitale Unterschrift (Kunde)</div></div></div></div>
-</div></section>
+  <!-- ===================== 1) AGB ===================== -->
+  <section class="page" id="doc-agb">
+    <div class="safe">
+      <header class="doc-head">
+        <div class="brand">
+          <span class="logo"></span>
+          <div>
+            <h1 class="doc-title">Allgemeine Geschäftsbedingungen (AGB)</h1>
+            <div class="subtitle">Version <span data-fill="heute"></span></div>
+          </div>
+        </div>
+        <div class="right"><span class="tag">AGB</span></div>
+      </header>
 
-<script>
-// Init visuals
-document.querySelectorAll('.doc-head .logo').forEach(el=>el.innerHTML=document.getElementById('logo').innerHTML);
-document.querySelectorAll('[data-slot="firmenblock"]').forEach(el=>el.innerHTML=document.getElementById('firmendaten').innerHTML);
-const todayStr=new Date().toLocaleDateString('de-DE');document.querySelectorAll('[data-bind="today"]').forEach(i=>i.value=todayStr);document.querySelectorAll('[data-fill="heute"]').forEach(e=>e.textContent=todayStr);
+      <div class="grid cols-2 mt-12">
+        <div class="card"><h2>1. Geltung</h2><p class="mt-8">Diese AGB gelten für alle Verträge über Planung, Lieferung und Installation von Smart-Home-Komponenten zwischen der <strong>Smart Home Trier GmbH</strong> und Verbrauchern/Unternehmern.</p></div>
+        <div class="card"><h2>2. Angebote & Preise</h2><p class="mt-8">Unsere Angebote sind 30 Tage gültig. Preise inkl. gesetzlicher MwSt., sofern nicht anders angegeben.</p></div>
+        <div class="card"><h2>3. Leistung & Mitwirkung</h2><p class="mt-8">Kunde stellt Zugang zu Räumen, Strom und Internet sicher. Elektroarbeiten beschränken sich auf festgelegte Tätigkeiten (EFKffT).</p></div>
+        <div class="card"><h2>4. Gewährleistung</h2><p class="mt-8">Es gelten die gesetzlichen Rechte. Herstellergarantien bleiben unberührt.</p></div>
+        <div class="card"><h2>5. Haftung</h2><p class="mt-8">Haftung für Vorsatz/grobe Fahrlässigkeit; bei Kardinalpflichten auch fahrlässig, begrenzt auf vertragstypischen Schaden.</p></div>
+        <div class="card"><h2>6. Widerruf (B2C)</h2><p class="mt-8">14 Tage Widerrufsrecht bei Fernabsatz. Muster siehe „Widerruf“.</p></div>
+        <div class="card"><h2>7. Datenschutz</h2><p class="mt-8">Verarbeitung nach DSGVO. Hinweise siehe „Datenschutzhinweise“.</p></div>
+        <div class="card"><h2>8. Gerichtsstand</h2><p class="mt-8">Gerichtsstand ist Trier, sofern zulässig.</p></div>
+      </div>
 
-// State (no localStorage)
-const STATE={steuer:{country:'DE',rate:19,grossInput:false},signatures:{kunde:'',techniker:''}};
-// Bind inputs (mirror)
-function setDeep(o,p,v){const ks=p.split('.');let n=o;while(ks.length>1){const k=ks.shift();n[k]=n[k]||{};n=n[k]}n[ks[0]]=v}
-document.querySelectorAll('input[data-model],textarea[data-model],select[data-model]').forEach(el=>{
-  el.addEventListener('input',()=>{const key=el.dataset.model;setDeep(STATE,key,(el.type==='checkbox')?el.checked:el.value);
-    document.querySelectorAll('[data-model="'+key+'"]').forEach(peer=>{if(peer===el)return; if(peer.type==='checkbox'){peer.checked=el.checked}else{peer.value=el.value}});
-  });
-});
+      <div class="grid cols-2 mt-16">
+        <div class="card"><h3>Firma</h3><div class="mt-8" data-slot="firmenblock"></div></div>
+        <div class="card">
+          <label>Besondere Vereinbarungen</label>
+          <textarea data-model="vertrag.besonderes" placeholder="Optionale Sonderabsprachen…"></textarea>
+        </div>
+      </div>
+      <div class="grid cols-2 mt-16">
+        <div>
+          <label>Ort, Datum</label>
+          <input id="agb-datum" data-model="vertrag.ortdatum" placeholder="Trier, 18.08.2025" />
+        </div>
+        <div>
+          <label>Bestätigung (Kunde)</label>
+          <div class="sig-box" data-sig="agb.kunde" title="Klicken zum Unterschreiben">Digitale Unterschrift (Kunde)</div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-// VAT presets
-const countrySel=document.getElementById('countrySel'), vatSel=document.getElementById('vatSel'), grossMode=document.getElementById('grossMode');
-const RATES={DE:[19,7], LU:[17,14,8,3]};
-function refreshVatOptions(){
-  vatSel.innerHTML='';
-  RATES[STATE.steuer.country].forEach(r=>{const o=document.createElement('option');o.value=r;o.textContent=r+' %'; if(r===STATE.steuer.rate)o.selected=true; vatSel.appendChild(o)});
-  document.getElementById('angebot-vatrate').textContent=STATE.steuer.rate;
-  document.getElementById('ab-vatrate').textContent=STATE.steuer.rate;
-  document.getElementById('re-vatrate').textContent=STATE.steuer.rate;
-  const priceLabel=STATE.steuer.grossInput?'Einzelpreis (Brutto)':'Einzelpreis (Netto)';
-  const sumLabel=STATE.steuer.grossInput?'Summe (Brutto)':'Summe (Netto)';
-  document.querySelectorAll('.col-price').forEach(n=>n.textContent=priceLabel);
-  document.querySelectorAll('.col-sum').forEach(n=>n.textContent=sumLabel);
-}
-countrySel.addEventListener('change',()=>{STATE.steuer.country=countrySel.value;STATE.steuer.rate=RATES[STATE.steuer.country][0];refreshVatOptions();recalcAll()});
-vatSel.addEventListener('change',()=>{STATE.steuer.rate=parseFloat(vatSel.value);refreshVatOptions();recalcAll()});
-grossMode.addEventListener('change',()=>{STATE.steuer.grossInput=!!grossMode.checked;refreshVatOptions();recalcAll()});
-refreshVatOptions(); vatSel.value='19'; grossMode.checked=false;
+  <!-- ===================== 2) Angebot ===================== -->
+  <section class="page" id="doc-angebot" data-lineitems>
+    <div class="safe">
+      <header class="doc-head">
+        <div class="brand">
+          <span class="logo"></span>
+          <div>
+            <h1 class="doc-title">Angebot</h1>
+            <div class="subtitle">Angebots-Nr.: <input style="width:160px" data-model="angebot.nr" placeholder="ANG-2025-001" /> · Datum: <input style="width:140px" data-bind="today" data-model="angebot.datum" /></div>
+          </div>
+        </div>
+        <div class="right"><span class="tag">Angebot</span></div>
+      </header>
 
-// Calc
-function euro(n){return n.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})}
-function recalcTable(table){
-  if(!table) return;
-  const rate=STATE.steuer.rate/100, grossIn=STATE.steuer.grossInput;
-  let subNet=0, totalGross=0;
-  table.querySelectorAll('tbody tr').forEach(tr=>{
-    const qty=parseFloat(tr.querySelector('td:nth-child(2) input')?.value||0);
-    const priceVal=parseFloat(tr.querySelector('td:nth-child(3) input')?.value||0);
-    let net=priceVal, gross=priceVal;
-    if(grossIn){ net=priceVal/(1+rate); gross=priceVal; } else { gross=priceVal*(1+rate); }
-    const lineNet=qty*net, lineGross=qty*gross;
-    subNet+=lineNet; totalGross+=lineGross;
-    const sum=tr.querySelector('.sum'); if(sum) sum.textContent = euro(grossIn?lineGross:lineNet);
-  });
-  const vat=totalGross - subNet;
-  const map={ 'table-angebot':['angebot-sub','angebot-vat','angebot-total'], 'table-ab':['ab-sub','ab-vat','ab-total'], 'table-re':['re-sub','re-vat','re-total'] };
-  const ids=map[table.id]; if(ids){ document.getElementById(ids[0]).textContent=euro(subNet); document.getElementById(ids[1]).textContent=euro(vat); document.getElementById(ids[2]).textContent=euro(totalGross); }
-  if(table.id==='table-re'){ recalcDeposit(totalGross); }
-}
-function recalcAll(){ document.querySelectorAll('table[data-table]').forEach(recalcTable); }
+      <div class="grid cols-2 mt-12">
+        <div class="card">
+          <h3>Kunde</h3>
+          <label>Name/Firma</label><input data-model="kunde.name" placeholder="Max Mustermann" />
+          <label>Adresse</label><input data-model="kunde.adresse" placeholder="Straße, Nr., PLZ Ort" />
+          <label>Kontakt</label><input data-model="kunde.kontakt" placeholder="+49 … / name@mail.de" />
+        </div>
+        <div class="card">
+          <h3>Projekt</h3>
+          <label>Bezeichnung</label><input data-model="projekt.bezeichnung" placeholder="Smartes Licht & Thermostate" />
+          <label>Ort</label><input data-model="projekt.ort" placeholder="Trier" />
+          <label>Bemerkungen</label><textarea data-model="projekt.bemerkungen" placeholder="Kurzbeschreibung…"></textarea>
+        </div>
+      </div>
 
-// Add/remove rows
-window.addLineItem=function(){
-  const page=document.activeElement?.closest('[data-lineitems]')||document.querySelector('[data-lineitems]'); if(!page) return;
-  const tbody=page.querySelector('tbody'); const tr=document.createElement('tr');
-  tr.innerHTML='<td><input placeholder="Position"></td><td><input type="number" step="1" min="1" value="1"></td><td><input type="number" step="0.01" min="0" value="0"></td><td class="right sum">0,00</td><td class="action"><button class="btn small" onclick="removeRow(this)">🗑️</button></td>';
-  tbody.appendChild(tr); tr.querySelectorAll('input').forEach(i=>i.addEventListener('input',()=>recalcTable(page.querySelector('table')))); recalcTable(page.querySelector('table')); tr.querySelector('input')?.focus();
-};
-window.removeRow=function(btn){ const table=btn.closest('table'); btn.closest('tr').remove(); recalcTable(table); };
+      <div class="card mt-12">
+        <div class="copy-row actions" style="justify-content:space-between; align-items:center;">
+          <div class="muted">Positionen</div>
+          <button class="btn" onclick="copyItems('doc-angebot','doc-auftragsbestaetigung')">In Auftragsbestätigung kopieren</button>
+        </div>
+        <table id="table-angebot">
+          <thead>
+            <tr>
+              <th style="width:42%">Position</th>
+              <th style="width:10%">Menge</th>
+              <th style="width:20%" class="th-price">Einzelpreis (Netto)</th>
+              <th style="width:20%" class="right th-sum">Summe (Netto)</th>
+              <th class="action-col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input placeholder="Philips Hue – Starter Set" /></td>
+              <td><input type="number" step="1" min="1" value="1" /></td>
+              <td><input type="number" step="0.01" min="0" value="199" /></td>
+              <td class="right sum">199,00</td>
+              <td class="action-col"><button class="del-btn" onclick="delRow(this)">🗑️</button></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr><td colspan="3" class="right">Zwischensumme (Netto)</td><td class="right" id="angebot-sub">0,00</td><td class="action-col"></td></tr>
+            <tr><td colspan="3" class="right">MwSt <span data-hook="vatlabel">19%</span></td><td class="right" id="angebot-vat">0,00</td><td class="action-col"></td></tr>
+            <tr><td colspan="3" class="right"><strong>Gesamt (Brutto)</strong></td><td class="right" id="angebot-total"><strong>0,00</strong></td><td class="action-col"></td></tr>
+          </tfoot>
+        </table>
+        <div class="mt-8 actions">
+          <button class="btn" onclick="addLineItem()">+ Position hinzufügen</button>
+        </div>
+      </div>
 
-// Copy Angebot -> Auftrag & Rechnung
-window.copyFromAngebot=function(){
-  const src=document.getElementById('table-angebot').querySelector('tbody');
-  const rows=Array.from(src.querySelectorAll('tr')).map(tr=>{const c=tr.querySelectorAll('td'); return {pos:c[0].querySelector('input')?.value||'', qty:c[1].querySelector('input')?.value||'1', price:c[2].querySelector('input')?.value||'0'};});
-  [document.getElementById('table-ab'), document.getElementById('table-re')].forEach(tbl=>{
-    const tb=tbl.querySelector('tbody'); tb.innerHTML='';
-    rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML='<td><input value="'+escapeHtml(r.pos)+'"></td><td><input type="number" step="1" min="1" value="'+r.qty+'"></td><td><input type="number" step="0.01" min="0" value="'+r.price+'"></td><td class="right sum">0,00</td><td class="action"><button class="btn small" onclick="removeRow(this)">🗑️</button></td>'; tb.appendChild(tr); tr.querySelectorAll('input').forEach(i=>i.addEventListener('input',()=>recalcTable(tbl))); });
-    recalcTable(tbl);
-  });
-};
-function escapeHtml(s){return (s+'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;')}
+      <div class="grid cols-2 mt-12">
+        <div class="card">
+          <h3>Gültigkeit & Bedingungen</h3>
+          <p class="muted mt-8">Gültig 30 Tage. Lieferzeiten je nach Herstellerverfügbarkeit. Es gelten unsere AGB.</p>
+        </div>
+        <div class="card">
+          <h3>Akzeptanz</h3>
+          <p class="mt-8">Mit Unterschrift bestätigt der Kunde das Angebot.</p>
+          <div class="mt-12 grid cols-2">
+            <div>
+              <label>Ort/Datum</label>
+              <input data-model="angebot.ortdatum" placeholder="Trier, 18.08.2025" />
+            </div>
+            <div>
+              <label>Unterschrift (Kunde)</label>
+              <div class="sig-box" data-sig="angebot.kunde" title="Klicken zum Unterschreiben">Digitale Unterschrift (Kunde)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-// Deposit
-const anzPercent=document.getElementById('anzPercent'), anzAmount=document.getElementById('anzAmount');
-function recalcDeposit(totalGross){
-  const active= document.activeElement;
-  const p=parseFloat(anzPercent?.value||'0'); let a=parseFloat(anzAmount?.value||'0');
-  if(active===anzPercent){ a= totalGross*(p/100); if(anzAmount) anzAmount.value = a.toFixed(2); }
-  else if(active===anzAmount){ const np = totalGross>0 ? (a/totalGross)*100 : 0; if(anzPercent) anzPercent.value = np.toFixed(2); }
-  else { a = totalGross*(parseFloat(anzPercent?.value||'0')/100); if(anzAmount) anzAmount.value = a.toFixed(2); }
-  const rest = Math.max(0,totalGross - a);
-  document.getElementById('re-anzahlung').textContent = euro(a);
-  document.getElementById('re-rest').textContent = euro(rest);
-}
-anzPercent?.addEventListener('input',()=>recalcTable(document.getElementById('table-re')));
-anzAmount?.addEventListener('input',()=>recalcTable(document.getElementById('table-re')));
+  <!-- ===================== 3) Auftragsbestätigung ===================== -->
+  <section class="page" id="doc-auftragsbestaetigung" data-lineitems>
+    <div class="safe">
+      <header class="doc-head">
+        <div class="brand">
+          <span class="logo"></span>
+          <div>
+            <h1 class="doc-title">Auftragsbestätigung</h1>
+            <div class="subtitle">Auftrags-Nr.: <input style="width:160px" data-model="auftrag.nr" placeholder="AB-2025-001" /> · Bezug: <input style="width:120px" data-model="auftrag.bezug" placeholder="ANG-2025-001" /></div>
+          </div>
+        </div>
+        <div class="right"><span class="tag">Auftragsbestätigung</span></div>
+      </header>
 
-// Wire inputs and initial calc
-document.querySelectorAll('table[data-table] tbody input').forEach(i=>i.addEventListener('input',()=>recalcAll()));
-recalcAll();
+      <div class="grid cols-2 mt-12">
+        <div class="card">
+          <h3>Kunde</h3>
+          <label>Name/Firma</label><input data-model="kunde.name" />
+          <label>Adresse</label><input data-model="kunde.adresse" />
+          <label>Kontakt</label><input data-model="kunde.kontakt" />
+        </div>
+        <div class="card">
+          <h3>Leistung</h3>
+          <label>Geplanter Termin</label><input type="date" data-model="auftrag.termin" />
+          <label>Bemerkungen</label><textarea data-model="auftrag.bemerkungen" placeholder="Optional…"></textarea>
+        </div>
+      </div>
 
-// Signatures
-const modal=document.createElement('div'); modal.className='sig-modal';
-modal.innerHTML='<div class="sig-dialog"><h3>Digitale Unterschrift</h3><div class="sig-canvas-wrap"><canvas id="sigCanvas"></canvas></div><div class="sig-actions"><div class="actions"><button class="btn" id="clearSig">Löschen</button></div><div class="actions"><button class="btn" id="cancelSig">Abbrechen</button><button class="btn primary" id="saveSig">Speichern</button></div></div><div class="note">Mit Maus, Touch oder Stift unterschreiben.</div></div>';
-document.body.appendChild(modal);
-let sigRole='kunde', ctx, drawing=false, last=null;
-function resizeCanvas(){ const c=document.getElementById('sigCanvas'); const r=c.parentElement.getBoundingClientRect(); const d=Math.max(window.devicePixelRatio||1,1); c.width=Math.floor(r.width*d); c.height=Math.floor(r.height*d); c.style.width=r.width+'px'; c.style.height=r.height+'px'; ctx=c.getContext('2d'); ctx.scale(d,d); ctx.lineWidth=2; ctx.lineCap='round'; ctx.strokeStyle='#fff'; const data=STATE.signatures[sigRole]; if(data){ const img=new Image(); img.onload=()=>ctx.drawImage(img,0,0,r.width,r.height); img.src=data; } else { ctx.clearRect(0,0,r.width,r.height); } }
-function p(e){ const c=document.getElementById('sigCanvas'); const r=c.getBoundingClientRect(); const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left; const y=(e.touches?e.touches[0].clientY:e.clientY)-r.top; return {x,y}; }
-function start(e){ drawing=true; last=p(e); e.preventDefault(); }
-function move(e){ if(!drawing) return; const q=p(e); ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(q.x,q.y); ctx.stroke(); last=q; e.preventDefault(); }
-function end(e){ drawing=false; e && e.preventDefault(); }
-function attach(){ const c=document.getElementById('sigCanvas'); c.addEventListener('mousedown',start); c.addEventListener('mousemove',move); window.addEventListener('mouseup',end); c.addEventListener('touchstart',start,{passive:false}); c.addEventListener('touchmove',move,{passive:false}); c.addEventListener('touchend',end,{passive:false}); }
-function renderSig(){ document.querySelectorAll('.sig-box').forEach(b=>{ const r=b.dataset.sig||'kunde'; const d=STATE.signatures[r]; b.innerHTML = d ? '<img alt="Unterschrift" src="'+d+'">' : (r==='techniker'?'Digitale Unterschrift (Techniker)':'Digitale Unterschrift (Kunde)'); }); }
-window.openSig=function(role){ sigRole=role||'kunde'; modal.style.display='flex'; setTimeout(resizeCanvas,30); };
-function closeSig(){ modal.style.display='none'; }
-modal.querySelector('#clearSig').addEventListener('click',()=>{ const c=document.getElementById('sigCanvas'); ctx.clearRect(0,0,c.width,c.height); });
-modal.querySelector('#cancelSig').addEventListener('click',closeSig);
-modal.querySelector('#saveSig').addEventListener('click',()=>{ const c=document.getElementById('sigCanvas'); STATE.signatures[sigRole] = c.toDataURL('image/png'); renderSig(); closeSig(); });
-window.addEventListener('resize',()=>{ if(modal.style.display==='flex') resizeCanvas(); });
-attach(); renderSig();
-document.querySelectorAll('.sig-box').forEach(b=>b.addEventListener('click',()=>openSig(b.dataset.sig||'kunde')));
+      <div class="card mt-12">
+        <div class="copy-row actions" style="justify-content:space-between; align-items:center;">
+          <div class="muted">Positionen</div>
+          <button class="btn" onclick="copyItems('doc-auftragsbestaetigung','doc-rechnung')">In Rechnung kopieren</button>
+        </div>
+        <table id="table-ab">
+          <thead><tr>
+            <th>Position</th><th>Menge</th><th class="th-price">Einzelpreis (Netto)</th><th class="right th-sum">Summe (Netto)</th><th class="action-col"></th>
+          </tr></thead>
+          <tbody></tbody>
+          <tfoot>
+            <tr><td colspan="3" class="right">Zwischensumme (Netto)</td><td class="right" id="ab-sub">0,00</td><td class="action-col"></td></tr>
+            <tr><td colspan="3" class="right">MwSt <span data-hook="vatlabel">19%</span></td><td class="right" id="ab-vat">0,00</td><td class="action-col"></td></tr>
+            <tr><td colspan="3" class="right"><strong>Gesamt (Brutto)</strong></td><td class="right" id="ab-total"><strong>0,00</strong></td><td class="action-col"></td></tr>
+          </tfoot>
+        </table>
+        <div class="mt-8 actions">
+          <button class="btn" onclick="addLineItem()">+ Position hinzufügen</button>
+        </div>
+      </div>
 
-// Save as HTML (filename by Angebots-Nr.)
-window.saveAsHtml=function(){
-  const clone=document.documentElement.cloneNode(true);
-  clone.querySelectorAll('input,textarea,select').forEach(el=>{
-    if(el.type==='checkbox'){ if(el.checked) el.setAttribute('checked','checked'); else el.removeAttribute('checked'); }
-    else if(el.tagName.toLowerCase()==='textarea'){ el.textContent = el.value; }
-    else { el.setAttribute('value', el.value); }
-  });
-  const html='<!DOCTYPE html>\n'+clone.outerHTML;
-  const blob=new Blob([html],{type:'text/html'});
-  const ang=(document.querySelector('[data-model="angebot.nr"]')?.value || ('ANG-'+new Date().toISOString().slice(0,10))).replace(/[^A-Za-z0-9_-]+/g,'-');
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='Dokumente-'+ang+'.html'; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},100);
-};
-</script>
+      <div class="grid cols-2 mt-12">
+        <div class="card">
+          <h3>Zahlungsbedingungen</h3>
+          <p class="muted mt-8">50% bei Auftrag, Rest nach Abnahme; oder wie vereinbart.</p>
+        </div>
+        <div class="card">
+          <h3>Bestätigung</h3>
+          <div class="grid cols-2 mt-8">
+            <div>
+              <label>Ort/Datum</label><input data-model="auftrag.ortdatum" placeholder="Trier, 18.08.2025" />
+            </div>
+            <div>
+              <label>Unterschrift (Kunde)</label><div class="sig-box" data-sig="ab.kunde">Digitale Unterschrift (Kunde)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 4) Rechnung (mit Anzahlung) ===================== -->
+  <section class="page" id="doc-rechnung" data-lineitems>
+    <div class="safe">
+      <header class="doc-head">
+        <div class="brand">
+          <span class="logo"></span>
+          <div>
+            <h1 class="doc-title">Rechnung</h1>
+            <div class="subtitle">Rechnungs-Nr.: <input style="width:160px" data-model="rechnung.nr" placeholder="RE-2025-001" /> · Datum: <input style="width:140px" data-bind="today" data-model="rechnung.datum" /></div>
+          </div>
+        </div>
+        <div class="right"><span class="tag">Rechnung</span></div>
+      </header>
+
+      <div class="grid cols-2 mt-12">
+        <div class="card">
+          <h3>Rechnung an</h3>
+          <label>Name/Firma</label><input data-model="kunde.name" />
+          <label>Adresse</label><input data-model="kunde.adresse" />
+          <label>Kontakt</label><input data-model="kunde.kontakt" />
+        </div>
+        <div class="card">
+          <h3>Zahlungsziel</h3>
+          <label>Fällig am</label><input type="date" data-model="rechnung.faellig" />
+          <label>Verwendungszweck</label><input data-model="rechnung.verwendungszweck" placeholder="Rechnungsnummer / Projekt" />
+        </div>
+      </div>
+
+      <div class="card mt-12">
+        <table id="table-re">
+          <thead><tr>
+            <th>Position</th><th>Menge</th><th class="th-price">Einzelpreis (Netto)</th><th class="right th-sum">Summe (Netto)</th><th class="action-col"></th>
+          </tr></thead>
+          <tbody></tbody>
+          <tfoot>
+            <tr><td colspan="3" class="right">Zwischensumme (Netto)</td><td class="right" id="re-sub">0,00</td><td class="action-col"></td></tr>
+            <tr><td colspan="3" class="right">MwSt <span data-hook="vatlabel">19%</span></td><td class="right" id="re-vat">0,00</td><td class="action-col"></td></tr>
+            <tr><td colspan="3" class="right"><strong>Gesamt (Brutto)</strong></td><td class="right" id="re-total"><strong>0,00</strong></td><td class="action-col"></td></tr>
+            <tr><td colspan="3" class="right">Anzahlung (Brutto)</td><td class="right"><input style="width:130px;text-align:right" type="number" min="0" step="0.01" data-model="rechnung.anzahlung" placeholder="0,00" /></td><td class="action-col"></td></tr>
+            <tr><td colspan="3" class="right"><strong>Restbetrag (Brutto)</strong></td><td class="right" id="re-rest"><strong>0,00</strong></td><td class="action-col"></td></tr>
+          </tfoot>
+        </table>
+        <div class="mt-8 actions">
+          <button class="btn" onclick="addLineItem()">+ Position hinzufügen</button>
+        </div>
+      </div>
+
+      <div class="grid cols-2 mt-12">
+        <div class="card">
+          <h3>Bankverbindung</h3>
+          <p class="mt-8">Smart Home Trier GmbH<br/>IBAN: DE•••• •••• •••• •••• •• · BIC: GENODEF1TRI</p>
+        </div>
+        <div class="card">
+          <h3>Hinweis</h3>
+          <p class="muted mt-8">Vielen Dank für Ihren Auftrag! Es gelten unsere AGB.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 5) Installationsprotokoll ===================== -->
+  <section class="page" id="doc-installationsprotokoll">
+    <div class="safe">
+      <header class="doc-head">
+        <div class="brand">
+          <span class="logo"></span>
+          <div>
+            <h1 class="doc-title">Installationsprotokoll</h1>
+            <div class="subtitle">Projekt-Nr.: <input style="width:160px" data-model="projekt.nr" placeholder="PRJ-2025-001" /> · Datum: <input style="width:140px" data-bind="today" data-model="projekt.datum" /></div>
+          </div>
+        </div>
+        <div class="right"><span class="tag">Protokoll</span></div>
+      </header>
+
+      <div class="grid cols-3 mt-12">
+        <div class="card">
+          <h3>Kunde</h3>
+          <label>Name</label><input data-model="kunde.name" />
+          <label>Adresse</label><input data-model="kunde.adresse" />
+        </div>
+        <div class="card">
+          <h3>Techniker</h3>
+          <label>Name</label><input data-model="techniker.name" placeholder="Niklas Schütz" />
+          <label>Kontakt</label><input data-model="techniker.kontakt" />
+        </div>
+        <div class="card">
+          <h3>Geräte</h3>
+          <label>Auflistung</label><textarea data-model="protokoll.geraete" placeholder="z. B. Hue Bridge, 4x E27…"></textarea>
+        </div>
+      </div>
+
+      <div class="grid cols-2 mt-12">
+        <div class="card">
+          <h3>Funktionstest</h3>
+          <label>Ergebnisse</label><textarea data-model="protokoll.test" placeholder="Alle Geräte erfolgreich gekoppelt, Szenen eingerichtet…"></textarea>
+        </div>
+        <div class="card">
+          <h3>Sicherheit & Netzwerk</h3>
+          <label>Hinweise</label><textarea data-model="protokoll.netz" placeholder="Passwörter, Verschlüsselung, Fernzugriff…"></textarea>
+        </div>
+      </div>
+
+      <div class="grid cols-2 mt-16">
+        <div>
+          <label>Datum/Unterschrift (Techniker)</label><div class="sig-box" data-sig="install.techniker">Digitale Unterschrift (Techniker)</div>
+        </div>
+        <div>
+          <label>Unterschrift (Kunde)</label><div class="sig-box" data-sig="install.kunde">Digitale Unterschrift (Kunde)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 6) Übergabeprotokoll ===================== -->
+  <section class="page" id="doc-uebergabe">
+    <div class="safe">
+      <header class="doc-head">
+        <div class="brand">
+          <span class="logo"></span>
+          <div>
+            <h1 class="doc-title">Übergabeprotokoll</h1>
+            <div class="subtitle">Projekt: <input style="width:220px" data-model="projekt.bezeichnung" placeholder="Adresse / Kunde" /></div>
+          </div>
+        </div>
+        <div class="right"><span class="tag">Übergabe</span></div>
+      </header>
+
+      <div class="grid cols-2 mt-12">
+        <div class="card">
+          <h3>Einweisung erfolgt</h3>
+          <label><input type="checkbox" data-model="uebergabe.app" /> App installiert & Zugangsdaten übergeben</label>
+          <label><input type="checkbox" data-model="uebergabe.szenen" /> Szenen & Automationen erklärt</label>
+          <label><input type="checkbox" data-model="uebergabe.sicherheit" /> Sicherheitshinweise besprochen</label>
+        </div>
+        <div class="card">
+          <h3>Restarbeiten / Mängel</h3>
+          <textarea data-model="uebergabe.maengel" placeholder="Falls vorhanden…"></textarea>
+        </div>
+      </div>
+
+      <div class="grid cols-2 mt-16">
+        <div>
+          <label>Datum/Unterschrift (Techniker)</label><div class="sig-box" data-sig="uebergabe.techniker">Digitale Unterschrift (Techniker)</div>
+        </div>
+        <div>
+          <label>Unterschrift (Kunde)</label><div class="sig-box" data-sig="uebergabe.kunde">Digitale Unterschrift (Kunde)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 7) Garantieschein ===================== -->
+  <section class="page" id="doc-garantie">
+    <div class="safe">
+      <header class="doc-head">
+        <div class="brand">
+          <span class="logo"></span>
+          <div>
+            <h1 class="doc-title">Garantieschein</h1>
+            <div class="subtitle">Garantie für Smart-Home-Installation</div>
+          </div>
+        </div>
+        <div class="right"><span class="tag">Garantie</span></div>
+      </header>
+
+      <div class="grid cols-2 mt-12">
+        <div class="card">
+          <h3>Kunde</h3>
+          <label>Name</label><input data-model="kunde.name" />
+          <label>Adresse</label><input data-model="kunde.adresse" />
+          <label>Projekt/Datum</label><input data-model="garantie.projekt" />
+        </div>
+        <div class="card">
+          <h3>Garantiebedingungen</h3>
+          <p class="mt-8">12 Monate auf Montageleistungen ab Abnahme. Herstellergarantien laut Herstellerangaben.</p>
+        </div>
+      </div>
+
+      <div class="grid cols-2 mt-16">
+        <div>
+          <label>Stempel/Unterschrift</label><div class="sig-box" data-sig="garantie.techniker">Digitale Unterschrift (Techniker)</div>
+        </div>
+        <div>
+          <label>Kundenunterschrift</label><div class="sig-box" data-sig="garantie.kunde">Digitale Unterschrift (Kunde)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 8) Checkliste Erstberatung ===================== -->
+  <section class="page" id="doc-checkliste">
+    <div class="safe">
+      <header class="doc-head">
+        <div class="brand">
+          <span class="logo"></span>
+          <div>
+            <h1 class="doc-title">Checkliste – Erstberatung</h1>
+            <div class="subtitle">Termin am <input style="width:160px" type="date" data-model="check.termin" /></div>
+          </div>
+        </div>
+        <div class="right"><span class="tag">Checkliste</span></div>
+      </header>
+
+      <div class="grid cols-2 mt-12">
+        <div class="card">
+          <h3>Kunde</h3>
+          <label>Name</label><input data-model="kunde.name" />
+          <label>Adresse</label><input data-model="kunde.adresse" />
+          <label>Kontakt</label><input data-model="kunde.kontakt" />
+        </div>
+        <div class="card">
+          <h3>Objekt</h3>
+          <label>Wohnung / Haus / Gewerbe</label><input data-model="objekt.art" />
+          <label>Internet / WLAN</label><input data-model="objekt.netz" placeholder="Provider, Router…" />
+        </div>
+      </div>
+
+      <div class="grid cols-2 mt-12">
+        <div class="card">
+          <h3>Wünsche / Bereiche</h3>
+          <label><input type="checkbox" data-model="wuensche.licht" /> Beleuchtung</label>
+          <label><input type="checkbox" data-model="wuensche.klima" /> Klima & Heizung</label>
+          <label><input type="checkbox" data-model="wuensche.sicherheit" /> Sicherheit (Kamera, Alarm)</label>
+          <label><input type="checkbox" data-model="wuensche.automationen" /> Automationen</label>
+          <label><input type="checkbox" data-model="wuensche.sprache" /> Sprachsteuerung</label>
+          <label><input type="checkbox" data-model="wuensche.zutritt" /> Video & Zutritt</label>
+        </div>
+        <div class="card">
+          <h3>Budget & Zeit</h3>
+          <label>Budgetrahmen (€)</label><input data-model="budget.rahmen" placeholder="z. B. 1.000–3.000" />
+          <label>Wunschtermin</label><input type="date" data-model="budget.wunschtermin" />
+          <label>Notizen</label><textarea data-model="budget.notizen"></textarea>
+        </div>
+      </div>
+
+      <div class="grid cols-2 mt-16">
+        <div>
+          <label>Berater</label><input data-model="techniker.name" placeholder="Niklas Schütz" />
+        </div>
+        <div>
+          <label>Unterschrift (Kunde)</label><div class="sig-box" data-sig="check.kunde">Digitale Unterschrift (Kunde)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 9) Widerruf ===================== -->
+  <section class="page" id="doc-widerruf">
+    <div class="safe">
+      <header class="doc-head">
+        <div class="brand">
+          <span class="logo"></span>
+          <div>
+            <h1 class="doc-title">Widerrufsbelehrung (B2C)</h1>
+            <div class="subtitle">Fernabsatz / Haustürgeschäft</div>
+          </div>
+        </div>
+        <div class="right"><span class="tag">Widerruf</span></div>
+      </header>
+
+      <div class="card mt-12">
+        <p><strong>Widerrufsrecht:</strong> Sie haben das Recht, binnen 14 Tagen ohne Angabe von Gründen diesen Vertrag zu widerrufen. Die Frist beginnt ab Vertragsschluss, bei Waren ab Erhalt.</p>
+        <p class="mt-8"><strong>Folgen des Widerrufs:</strong> Wir erstatten alle Zahlungen binnen 14 Tagen. Bereits erbrachte Leistungen sind zu vergüten, sofern Sie vor Ablauf der Frist deren Beginn verlangt haben.</p>
+      </div>
+
+      <div class="card mt-12">
+        <h3>Muster-Widerrufsformular</h3>
+        <p class="muted mt-8">Bitte ausfüllen und elektronisch zurücksenden.</p>
+        <div class="grid cols-2 mt-12">
+          <div>
+            <label>An (Unternehmen)</label><input value="Smart Home Trier GmbH" />
+            <label>Adresse</label><input data-model="firma.adresse" placeholder="Straße, PLZ, Ort" />
+            <label>E-Mail</label><input value="info@smarthome-trier.de" />
+          </div>
+          <div>
+            <label>Hiermit widerrufe ich…</label><textarea data-model="widerruf.text"></textarea>
+          </div>
+        </div>
+        <div class="grid cols-3 mt-12">
+          <div><label>Name</label><input data-model="kunde.name" /></div>
+          <div><label>Anschrift</label><input data-model="kunde.adresse" /></div>
+          <div><label>Datum/Unterschrift</label><div class="sig-box" data-sig="widerruf.kunde">Digitale Unterschrift (Kunde)</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 10) Datenschutzhinweise ===================== -->
+  <section class="page" id="doc-datenschutz">
+    <div class="safe">
+      <header class="doc-head">
+        <div class="brand">
+          <span class="logo"></span>
+          <div>
+            <h1 class="doc-title">Datenschutzhinweise (DSGVO)</h1>
+            <div class="subtitle">Informationspflichten Art. 13/14 DSGVO</div>
+          </div>
+        </div>
+        <div class="right"><span class="tag">Datenschutz</span></div>
+      </header>
+
+      <div class="grid cols-2 mt-12">
+        <div class="card">
+          <h3>Verantwortlicher</h3>
+          <div class="mt-8" data-slot="firmenblock"></div>
+          <p class="muted mt-8">Kontakt Datenschutz: <input data-model="ds.kontakt" placeholder="privacy@smarthome-trier.de" /></p>
+        </div>
+        <div class="card">
+          <h3>Zwecke & Rechtsgrundlagen</h3>
+          <p class="mt-8">Vertragsanbahnung und -durchführung (Art. 6 Abs. 1 lit. b DSGVO), berechtigtes Interesse (lit. f) für Support & Qualitätssicherung, Einwilligung (lit. a) für Marketing.</p>
+        </div>
+        <div class="card">
+          <h3>Empfänger</h3>
+          <p class="mt-8">Zahlungsdienstleister, Versand-/Montagepartner, IT-Hosting.</p>
+        </div>
+        <div class="card">
+          <h3>Speicherdauer</h3>
+          <p class="mt-8">Nach gesetzlichen Aufbewahrungsfristen; im Übrigen bis Wegfall des Zwecks.</p>
+        </div>
+        <div class="card">
+          <h3>Ihre Rechte</h3>
+          <p class="mt-8">Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit, Widerspruch, Beschwerde bei einer Aufsichtsbehörde.</p>
+        </div>
+        <div class="card">
+          <h3>Einwilligung</h3>
+          <label>Marketing-Einwilligung (optional)</label>
+          <label><input type="checkbox" data-model="ds.optin" /> Ich willige in die Zusendung von Informationen per E-Mail/Telefon ein.</label>
+        </div>
+      </div>
+
+      <div class="grid cols-2 mt-16">
+        <div>
+          <label>Datum/Unterschrift (Kunde)</label><div class="sig-box" data-sig="ds.kunde">Digitale Unterschrift (Kunde)</div>
+        </div>
+        <div>
+          <label>Unterschrift (Unternehmen)</label><div class="sig-box" data-sig="ds.unternehmen">Digitale Unterschrift (Unternehmen)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // ---------- Logo & Firmenblock ----------
+    document.querySelectorAll('.doc-head .logo').forEach(el => {
+      el.innerHTML = document.getElementById('logo').innerHTML;
+    });
+    document.querySelectorAll('[data-slot="firmenblock"]').forEach(el => {
+      el.innerHTML = document.getElementById('firmendaten').innerHTML;
+    });
+
+    // ---------- Datum ausfüllen ----------
+    const todayStr = new Date().toLocaleDateString('de-DE');
+    document.querySelectorAll('[data-bind="today"]').forEach(i => { if(!i.value) i.value = todayStr; });
+    document.querySelectorAll('[data-fill="heute"]').forEach(e => e.textContent = todayStr);
+
+    // ==================== JSON-only Store (kein LocalStorage) ====================
+    // Alle Daten leben in `doc`. Export/Import schreiben/lesen diese Struktur.
+    let doc = {
+      settings: { land:'DE', vat: '19', mode:'net' },
+      signatures: {}
+    };
+
+    // Hilfsfunktionen für Pfadzugriff
+    function setDoc(path, value){
+      const keys = path.split('.');
+      let obj = doc;
+      while(keys.length > 1){
+        const k = keys.shift();
+        obj[k] = obj[k] || {};
+        obj = obj[k];
+      }
+      obj[keys[0]] = value;
+    }
+    function getDoc(path, fallback=''){
+      const keys = path.split('.');
+      let obj = doc;
+      for(const k of keys){
+        if(obj && typeof obj === 'object' && k in obj){ obj = obj[k]; } else { return fallback; }
+      }
+      return obj;
+    }
+
+    // ---------- Data-Model Binding ----------
+    function bindAllInputs(){
+      const inputs = document.querySelectorAll('input[data-model], textarea[data-model], select[data-model]');
+      inputs.forEach(el => {
+        const key = el.dataset.model;
+        const val = getDoc(key, '');
+        if(el.type === 'checkbox'){
+          el.checked = Boolean(val);
+        }else if(val !== ''){
+          el.value = val;
+        }
+        el.addEventListener('input', () => {
+          const v = el.type === 'checkbox' ? el.checked : el.value;
+          setDoc(key, v);
+          // sync peers
+          document.querySelectorAll(`[data-model="${key}"]`).forEach(peer => {
+            if(peer === el) return;
+            if(peer.type === 'checkbox'){ peer.checked = v; } else { peer.value = v; }
+          });
+          if(key.startsWith('rechnung.anzahlung')) recalcAll();
+        });
+      });
+    }
+    bindAllInputs();
+
+    // ---------- VAT & Mode Settings (Toolbar <-> Deckblatt sync) ----------
+    const countrySel = document.getElementById('country');
+    const vatSel = document.getElementById('vatRate');
+    const modeSel = document.getElementById('priceMode');
+    const sLand = document.getElementById('s_land');
+    const sVat  = document.getElementById('s_vat');
+    const sMode = document.getElementById('s_mode');
+
+    function updateVatOptions(){
+      const country = countrySel.value;
+      // Show proper options
+      [...vatSel.options].forEach(o => {
+        if(o.value === '17'){ o.hidden = (country !== 'LU'); }
+        if(o.value === '7' || o.value === '19'){ o.hidden = (country !== 'DE'); }
+      });
+      // Auto-select default if current not valid
+      if(country === 'LU' && (vatSel.value !== '17')) vatSel.value = '17';
+      if(country === 'DE' && (vatSel.value !== '19' && vatSel.value !== '7')) vatSel.value = '19';
+      // Mirror to deckblatt
+      sLand.value = countrySel.value;
+      sVat.value = vatSel.value;
+      sMode.value = modeSel.value;
+      setDoc('settings.land', sLand.value);
+      setDoc('settings.vat', sVat.value);
+      setDoc('settings.mode', sMode.value);
+      relabelTables();
+      recalcAll();
+    }
+
+    function relabelTables(){
+      const mode = modeSel.value; // net | gross
+      const priceLabel = mode === 'net' ? 'Einzelpreis (Netto)' : 'Einzelpreis (Brutto)';
+      const sumLabel   = mode === 'net' ? 'Summe (Netto)' : 'Summe (Brutto)';
+      document.querySelectorAll('.th-price').forEach(th => th.textContent = priceLabel);
+      document.querySelectorAll('.th-sum').forEach(th => th.textContent = sumLabel);
+      const vat = parseFloat(vatSel.value || '19');
+      document.querySelectorAll('[data-hook="vatlabel"]').forEach(el => el.textContent = `${vat}%`);
+    }
+
+    countrySel.addEventListener('change', updateVatOptions);
+    vatSel.addEventListener('change', () => { sVat.value = vatSel.value; setDoc('settings.vat', sVat.value); relabelTables(); recalcAll(); });
+    modeSel.addEventListener('change', () => { sMode.value = modeSel.value; setDoc('settings.mode', sMode.value); relabelTables(); recalcAll(); });
+
+    // init settings from doc/defaults
+    (function initSettings(){
+      const land = getDoc('settings.land', 'DE'); countrySel.value = land; sLand.value = land;
+      const vat  = getDoc('settings.vat', land==='LU' ? '17':'19'); vatSel.value = vat; sVat.value = vat;
+      const mode = getDoc('settings.mode', 'net'); modeSel.value = mode; sMode.value = mode;
+      updateVatOptions();
+    })();
+
+    // Keep deckblatt -> toolbar sync too
+    sLand.addEventListener('change', () => { countrySel.value = sLand.value; updateVatOptions(); });
+    sVat.addEventListener('change', () => { vatSel.value = sVat.value; relabelTables(); recalcAll(); setDoc('settings.vat', sVat.value); });
+    sMode.addEventListener('change', () => { modeSel.value = sMode.value; relabelTables(); recalcAll(); setDoc('settings.mode', sMode.value); });
+
+    // ---------- Summenberechnung für Tabellen ----------
+    function formatEuro(n){ return n.toLocaleString('de-DE', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+    function parseNum(v){ const x = parseFloat(v); return isFinite(x) ? x : 0; }
+
+    function computeLineTotals(qty, priceInput, mode, vatRate){
+      qty = qty || 0;
+      priceInput = priceInput || 0;
+      const vr = vatRate/100;
+      let netEach, netSum, vatSum, grossEach, grossSum;
+      if(mode === 'net'){
+        netEach = priceInput;
+        netSum = qty * netEach;
+        grossEach = netEach * (1+vr);
+        grossSum = qty * grossEach;
+        vatSum = grossSum - netSum;
+      }else{ // gross input
+        grossEach = priceInput;
+        grossSum = qty * grossEach;
+        netEach = grossEach / (1+vr);
+        netSum = qty * netEach;
+        vatSum = grossSum - netSum;
+      }
+      return {netEach, netSum, vatSum, grossEach, grossSum};
+    }
+
+    function recalc(page){
+      const mode = modeSel.value;
+      const vat = parseFloat(vatSel.value || '19');
+      const tbody = page.querySelector('tbody');
+      let subNet = 0;
+      tbody.querySelectorAll('tr').forEach(tr => {
+        const qty = parseNum(tr.querySelector('td:nth-child(2) input')?.value);
+        const price = parseNum(tr.querySelector('td:nth-child(3) input')?.value);
+        const t = computeLineTotals(qty, price, mode, vat);
+        const sumCell = tr.querySelector('.sum') || tr.querySelector('td:nth-child(4)');
+        sumCell.textContent = formatEuro(mode === 'net' ? t.netSum : t.grossSum);
+        subNet += t.netSum;
+      });
+      const vatSum = subNet * (vat/100);
+      const total = subNet + vatSum;
+      const ids = {
+        'doc-angebot': ['angebot-sub','angebot-vat','angebot-total'],
+        'doc-auftragsbestaetigung': ['ab-sub','ab-vat','ab-total'],
+        'doc-rechnung': ['re-sub','re-vat','re-total']
+      };
+      const mapping = ids[page.id] || [];
+      if(mapping.length){
+        const [subId, vatId, totId] = mapping;
+        const s = document.getElementById(subId), v = document.getElementById(vatId), t = document.getElementById(totId);
+        if(s) s.textContent = formatEuro(subNet);
+        if(v) v.textContent = formatEuro(vatSum);
+        if(t) t.textContent = formatEuro(total);
+      }
+      // Anzahlung / Restbetrag (nur Rechnung)
+      if(page.id === 'doc-rechnung'){
+        const anz = parseNum(getDoc('rechnung.anzahlung', 0));
+        const rest = Math.max(total - anz, 0);
+        const restEl = document.getElementById('re-rest');
+        if(restEl) restEl.textContent = formatEuro(rest);
+      }
+    }
+    function recalcAll(){ document.querySelectorAll('[data-lineitems]').forEach(page => recalc(page)); }
+
+    // attach input listeners for existing rows
+    document.querySelectorAll('[data-lineitems]').forEach(page => {
+      page.querySelectorAll('tbody input').forEach(i => i.addEventListener('input', () => recalc(page)));
+      recalc(page);
+    });
+
+    window.addLineItem = function(){
+      let page = document.activeElement?.closest('[data-lineitems]') || document.querySelector('[data-lineitems]');
+      if(!page) return;
+      const tbody = page.querySelector('tbody');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input placeholder="Position" /></td>
+        <td><input type="number" step="1" min="1" value="1" /></td>
+        <td><input type="number" step="0.01" min="0" value="0" /></td>
+        <td class="right sum">0,00</td>
+        <td class="action-col"><button class="del-btn" onclick="delRow(this)">🗑️</button></td>
+      `;
+      tbody.appendChild(tr);
+      tr.querySelectorAll('input').forEach(i => i.addEventListener('input', () => recalc(page)));
+      recalc(page);
+      tr.querySelector('input')?.focus();
+    };
+    window.delRow = function(btn){
+      const page = btn.closest('[data-lineitems]');
+      btn.closest('tr')?.remove();
+      recalc(page);
+    };
+
+    // ---------- Copy Items between docs ----------
+    function tableDataFrom(pageId){
+      const page = document.getElementById(pageId);
+      const rows = [...page.querySelectorAll('tbody tr')].map(tr => ({
+        pos: tr.querySelector('td:nth-child(1) input')?.value || '',
+        qty: tr.querySelector('td:nth-child(2) input')?.value || '1',
+        price: tr.querySelector('td:nth-child(3) input')?.value || '0'
+      }));
+      return rows;
+    }
+    function fillTable(pageId, rows){
+      const page = document.getElementById(pageId);
+      const tbody = page.querySelector('tbody');
+      tbody.innerHTML = '';
+      rows.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><input value="${r.pos}"/></td>
+          <td><input type="number" step="1" min="1" value="${r.qty}"/></td>
+          <td><input type="number" step="0.01" min="0" value="${r.price}"/></td>
+          <td class="right sum">0,00</td>
+          <td class="action-col"><button class="del-btn" onclick="delRow(this)">🗑️</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      recalc(page);
+      // rebind input listeners
+      page.querySelectorAll('tbody input').forEach(i => i.addEventListener('input', () => recalc(page)));
+    }
+    window.copyItems = function(fromId, toId){
+      fillTable(toId, tableDataFrom(fromId));
+    };
+
+    // ---------- Signature Modal (JSON-basiert) ----------
+    const modal = document.createElement('div');
+    modal.className = 'sig-modal';
+    modal.innerHTML = `
+      <div class="sig-dialog">
+        <h3>Digitale Unterschrift</h3>
+        <div class="sig-canvas-wrap">
+          <canvas id="sigCanvas"></canvas>
+        </div>
+        <div class="sig-actions">
+          <div class="actions">
+            <button class="btn" id="clearSig">Löschen</button>
+          </div>
+          <div class="actions">
+            <button class="btn" id="cancelSig">Abbrechen</button>
+            <button class="btn primary" id="saveSig">Speichern</button>
+          </div>
+        </div>
+        <div class="note">Mit Maus, Touch oder Stift unterschreiben. Verhältnis 3:1, skaliert verlustfrei.</div>
+      </div>`;
+    document.body.appendChild(modal);
+
+    let sigKey = ''; // e.g. "angebot.kunde"
+    let ctx, drawing = false, last = null;
+
+    function resizeCanvas(){
+      const c = document.getElementById('sigCanvas');
+      const wrap = c.parentElement.getBoundingClientRect();
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      c.width = Math.floor(wrap.width * ratio);
+      c.height = Math.floor((wrap.width / parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sig-ratio'))) * ratio);
+      c.style.width = wrap.width + 'px';
+      c.style.height = (wrap.width / parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sig-ratio'))) + 'px';
+      ctx = c.getContext('2d');
+      ctx.scale(ratio, ratio);
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#ffffff';
+      // Load existing signature from JSON doc
+      const data = getDoc(`signatures.${sigKey}`, '');
+      ctx.clearRect(0,0,c.width, c.height);
+      if(data){
+        const img = new Image();
+        img.onload = () => ctx.drawImage(img, 0, 0, c.width/ratio, c.height/ratio);
+        img.src = data;
+      }
+    }
+
+    function pointerPos(e){
+      const c = document.getElementById('sigCanvas');
+      const rect = c.getBoundingClientRect();
+      const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+      const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+      return {x,y};
+    }
+
+    function startDraw(e){ drawing = true; last = pointerPos(e); e.preventDefault(); }
+    function moveDraw(e){
+      if(!drawing) return;
+      const p = pointerPos(e);
+      ctx.beginPath();
+      ctx.moveTo(last.x, last.y);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+      last = p;
+      e.preventDefault();
+    }
+    function endDraw(e){ drawing = false; e && e.preventDefault(); }
+
+    function attachCanvasEvents(){
+      const c = document.getElementById('sigCanvas');
+      c.addEventListener('mousedown', startDraw);
+      c.addEventListener('mousemove', moveDraw);
+      window.addEventListener('mouseup', endDraw);
+      c.addEventListener('touchstart', startDraw, {passive:false});
+      c.addEventListener('touchmove', moveDraw, {passive:false});
+      c.addEventListener('touchend', endDraw, {passive:false});
+    }
+
+    function renderAllSigBoxes(){
+      document.querySelectorAll('.sig-box').forEach(box => {
+        const key = box.dataset.sig || '';
+        const data = getDoc(`signatures.${key}`, '');
+        box.innerHTML = data ? `<img alt="Unterschrift" src="${data}"/>` : (box.textContent || 'Digitale Unterschrift');
+      });
+    }
+
+    window.addEventListener('resize', () => { if(modal.style.display === 'flex') resizeCanvas(); });
+
+    window.openSig = function(key){
+      sigKey = key;
+      modal.style.display = 'flex';
+      setTimeout(() => { resizeCanvas(); attachCanvasEvents(); }, 30);
+    };
+    function closeSig(){ modal.style.display = 'none'; }
+
+    modal.querySelector('#clearSig').addEventListener('click', () => {
+      const c = document.getElementById('sigCanvas');
+      ctx.clearRect(0,0,c.width, c.height);
+    });
+    modal.querySelector('#cancelSig').addEventListener('click', closeSig);
+    modal.querySelector('#saveSig').addEventListener('click', () => {
+      const c = document.getElementById('sigCanvas');
+      const dataUrl = c.toDataURL('image/png');
+      setDoc(`signatures.${sigKey}`, dataUrl);
+      renderAllSigBoxes();
+      closeSig();
+    });
+
+    // Click on boxes -> open modal
+    document.querySelectorAll('.sig-box').forEach(box => {
+      box.addEventListener('click', () => openSig(box.dataset.sig || ''));
+    });
+    renderAllSigBoxes();
+
+    // ---------- Export / Import JSON (kein LocalStorage) ----------
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      // Zusätzlich Tabellenzeilen in JSON persistieren
+      function serializeTable(pageId){
+        const page = document.getElementById(pageId);
+        const rows = [...page.querySelectorAll('tbody tr')].map(tr => ({
+          pos: tr.querySelector('td:nth-child(1) input')?.value || '',
+          qty: tr.querySelector('td:nth-child(2) input')?.value || '1',
+          price: tr.querySelector('td:nth-child(3) input')?.value || '0'
+        }));
+        return rows;
+      }
+      setDoc('angebot.items', serializeTable('doc-angebot'));
+      setDoc('auftrag.items', serializeTable('doc-auftragsbestaetigung'));
+      setDoc('rechnung.items', serializeTable('doc-rechnung'));
+
+      const data = JSON.stringify(doc, null, 2);
+      const blob = new Blob([data], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const cust = (getDoc('kunde.name','unbekannt') || '').toString().replace(/[^a-z0-9\-_. ]/gi,'_');
+      a.download = `vertrag_${cust}_${new Date().toISOString().slice(0,10)}.json`;
+      a.href = url; a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('importFile').addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try{
+          const obj = JSON.parse(reader.result);
+          doc = obj || {};
+          // Werte in Inputs übernehmen
+          document.querySelectorAll('input[data-model], textarea[data-model], select[data-model]').forEach(el => {
+            const key = el.dataset.model;
+            const val = getDoc(key, '');
+            if(el.type === 'checkbox'){ el.checked = Boolean(val); }
+            else if(val !== ''){ el.value = val; }
+          });
+          // Settings-Sync
+          const land = getDoc('settings.land', 'DE'); countrySel.value = land; sLand.value = land;
+          const vat  = getDoc('settings.vat', land==='LU' ? '17':'19'); vatSel.value = vat; sVat.value = vat;
+          const mode = getDoc('settings.mode', 'net'); modeSel.value = mode; sMode.value = mode;
+          updateVatOptions();
+          // Tabellen befüllen
+          const angebotRows = getDoc('angebot.items', []);
+          const abRows = getDoc('auftrag.items', []);
+          const reRows = getDoc('rechnung.items', []);
+          if(angebotRows.length) fillTable('doc-angebot', angebotRows);
+          if(abRows.length) fillTable('doc-auftragsbestaetigung', abRows);
+          if(reRows.length) fillTable('doc-rechnung', reRows);
+          renderAllSigBoxes();
+          recalcAll();
+        }catch(err){
+          alert('Import fehlgeschlagen: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    });
+  </script>
 </body>
 </html>
